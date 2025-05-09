@@ -319,13 +319,15 @@ class WP_Animated_Live_Wall
             wp_send_json_error('Invalid wall data');
         }
 
-        $walls = get_option('wpalw_walls', array());        // Generate ID if new wall
+        $walls = get_option('wpalw_walls', array());
+
+        // Generate ID if new wall
         if (empty($wall_data['id'])) {
             $wall_data['id'] = 'wall_' . time() . '_' . mt_rand(100, 999);
             $wall_data['images'] = array();
-            $wall_data['animation_speed'] = 5000;
-            $wall_data['columns'] = 4;
-            $wall_data['rows'] = 3;
+            $wall_data['animation_speed'] = isset($wall_data['animation_speed']) ? absint($wall_data['animation_speed']) : 5000;
+            $wall_data['columns'] = isset($wall_data['columns']) ? absint($wall_data['columns']) : 4;
+            $wall_data['rows'] = isset($wall_data['rows']) ? absint($wall_data['rows']) : 3;
             $walls[] = $wall_data;
         } else {
             // Update existing wall
@@ -336,6 +338,10 @@ class WP_Animated_Live_Wall
 
                     if (isset($wall_data['animation_speed'])) {
                         $walls[$key]['animation_speed'] = absint($wall_data['animation_speed']);
+                        // Ensure minimum speed
+                        if ($walls[$key]['animation_speed'] < 1000) {
+                            $walls[$key]['animation_speed'] = 1000;
+                        }
                     }
 
                     if (isset($wall_data['columns'])) {

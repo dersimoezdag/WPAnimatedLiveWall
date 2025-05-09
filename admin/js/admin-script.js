@@ -210,6 +210,12 @@
       var columns = $('#wpalw_columns').val();
       var rows = $('#wpalw_rows').val();
 
+      // Validiere animation speed (mindestens 1000)
+      if (animationSpeed < 1000) {
+        animationSpeed = 1000;
+        $('#wpalw_animation_speed').val(1000);
+      }
+
       $.ajax({
         url: wpalw_data.ajax_url,
         type: 'POST',
@@ -220,7 +226,8 @@
             id: wallId,
             animation_speed: animationSpeed,
             columns: columns,
-            rows: rows
+            rows: rows,
+            name: $('#wpalw-wall-name').val() // Füge Namen hinzu, um sicherzustellen, dass er erhalten bleibt
           }
         },
         success: function (response) {
