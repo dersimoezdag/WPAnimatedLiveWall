@@ -2,93 +2,101 @@ jQuery(document).ready(function ($) {
   // Initialisiere jede Animated Live Wall auf der Seite
   $('.wp-animated-live-wall').each(function () {
     const wall = $(this);
+
+    // CSS-Variablen für das Grid aus Daten-Attributen setzen
     const rows = parseInt(wall.data('rows')) || 3;
     const columns = parseInt(wall.data('columns')) || 4;
-
-    // Animationsgeschwindigkeit aus Datenattribut oder Standardwert nehmen
     const animationSpeed = parseInt(wall.data('animation-speed')) || 5000;
+    const transitionSpeed = parseInt(wall.data('transition')) || 400;
+    const gapSize = wall.data('gap') !== undefined ? parseInt(wall.data('gap')) : 4;
 
-    // Setze CSS-Variablen für das Grid-Layout
+    // CSS-Variablen setzen für korrektes Layout
     wall.css({
+      '--rows': rows,
+      '--columns': columns,
       'grid-template-columns': `repeat(${columns}, 1fr)`,
-      'grid-template-rows': `repeat(${rows}, 1fr)`
+      'grid-template-rows': `repeat(${rows}, 1fr)`,
+      'grid-gap': `${gapSize}px`
     });
 
-    // Suche alle sichtbaren Kacheln
+    // Elemente für die Bildrotation finden
     const visibleTiles = wall.find('.wall-tile');
+    const hiddenContainer = wall.find('.wpalw-hidden-images');
 
-    // Suche versteckte Bilder im versteckten Container
-    const hiddenImages = wall.find('.wpalw-hidden-images > div');
+    // Wenn wir keine versteckten Bilder haben oder keine sichtbaren Kacheln,
+    // gibt es nichts zu tun
+    if (hiddenContainer.length === 0 || visibleTiles.length === 0) return;
 
-    // Wenn keine versteckten Bilder vorhanden sind, keine Rotation notwendig
-    if (hiddenImages.length === 0) {
-      return;
-    }
+    const hiddenImages = hiddenContainer.find('div');
+    if (hiddenImages.length === 0) return;
 
-    // Rotation-Timeout-ID für späteren Zugriff speichern
-    let rotationTimeout;
+    let rotationTimer;
 
-    // Funktion für die Bildrotation definieren
-    function rotateImage() {
-      // Wähle eine zufällige sichtbare Kachel
+    /**
+     * Führt die Bildrotation zwischen sichtbaren und versteckten Bildern durch
+     */
+    function rotateImages() {
+      // Eine zufällige sichtbare Kachel auswählen
       const randomTileIndex = Math.floor(Math.random() * visibleTiles.length);
-      const randomTile = $(visibleTiles[randomTileIndex]);
-      const visibleImg = randomTile.find('img');
+      const visibleTile = visibleTiles.eq(randomTileIndex);
+      const visibleImg = visibleTile.find('img');
 
-      // Wähle ein zufälliges verstecktes Bild
+      // Ein zufälliges verstecktes Bild auswählen
       const randomHiddenIndex = Math.floor(Math.random() * hiddenImages.length);
-      const randomHiddenDiv = $(hiddenImages[randomHiddenIndex]);
-      const randomHiddenImg = randomHiddenDiv.find('img');
+      const hiddenDiv = hiddenImages.eq(randomHiddenIndex);
+      const hiddenImg = hiddenDiv.find('img');
 
-      // Hole Attribute vom versteckten Bild
-      const hiddenSrc = randomHiddenImg.attr('src');
-      const hiddenSrcset = randomHiddenImg.attr('srcset');
-      const hiddenSizes = randomHiddenImg.attr('sizes');
-      const hiddenId = randomHiddenDiv.data('id');
+      // Wenn eines der Bilder nicht vorhanden ist, abbrechen
+      if (!visibleImg.length || !hiddenImg.length) return;
 
-      // Hole Attribute vom sichtbaren Bild
-      const visibleSrc = visibleImg.attr('src');
-      const visibleSrcset = visibleImg.attr('srcset');
-      const visibleSizes = visibleImg.attr('sizes');
-      const visibleId = visibleImg.data('id');
+      // Attribute für den Bildtausch speichern
+      const swapAttributes = ['src', 'srcset', 'sizes', 'alt'];
+      const visibleAttrs = {};
+      const hiddenAttrs = {};
 
-      // Animiere den Bildwechsel
-      visibleImg.fadeOut(400, function () {
-        // Tausche die Attribute
-        visibleImg.attr({
-          src: hiddenSrc,
-          srcset: hiddenSrcset,
-          sizes: hiddenSizes,
-          'data-id': hiddenId
-        });
-
-        // Aktualisiere verstecktes Bild mit den vorherigen sichtbaren Bildattributen
-        randomHiddenImg.attr({
-          src: visibleSrc,
-          srcset: visibleSrcset,
-          sizes: visibleSizes
-        });
-        randomHiddenDiv.attr('data-id', visibleId);
-
-        // Blende das neue Bild ein
-        visibleImg.fadeIn(400, function () {
-          // Setze nächste Rotation nach Animation
-          rotationTimeout = setTimeout(rotateImage, animationSpeed);
-        });
+      // Aktuelle Attribute speichern
+      swapAttributes.forEach(attr => {
+        visibleAttrs[attr] = visibleImg.attr(attr);
+        hiddenAttrs[attr] = hiddenImg.attr(attr);
       });
+
+      // Zusätzlich die ID-Attribute speichern
+      const visibleId = visibleImg.attr('data-id');
+      const hiddenId = hiddenDiv.attr('data-id');
+
+      // Bilder mit Animations-Effekt austauschen
+      visibleImg.fadeOut(transitionSpeed, function () {
+        // Attribute des sichtbaren Bildes aktualisieren
+        swapAttributes.forEach(attr => {
+          visibleImg.attr(attr, hiddenAttrs[attr]);
+        });
+        visibleImg.attr('data-id', hiddenId);
+
+        // Attribute des versteckten Bildes aktualisieren
+        swapAttributes.forEach(attr => {
+          hiddenImg.attr(attr, visibleAttrs[attr]);
+        });
+        hiddenDiv.attr('data-id', visibleId);
+
+        // Bild wieder einblenden
+        visibleImg.fadeIn(transitionSpeed);
+      });
+
+      // Nächsten Bildwechsel planen
+      rotationTimer = setTimeout(rotateImages, animationSpeed);
     }
 
-    // Starte die erste Rotation nach Verzögerung
-    rotationTimeout = setTimeout(rotateImage, animationSpeed);
+    // Animation erst nach einer kurzen Verzögerung starten
+    rotationTimer = setTimeout(rotateImages, animationSpeed);
 
-    // Pausiere die Rotation, wenn das Fenster nicht sichtbar ist (Tab-Wechsel, etc.)
+    // Animations-Pausierung bei Sichtwechsel des Browsertabs
     $(document).on('visibilitychange', function () {
       if (document.hidden) {
-        // Wenn Seite nicht sichtbar, Rotation stoppen
-        clearTimeout(rotationTimeout);
+        // Animation pausieren wenn Tab nicht sichtbar
+        clearTimeout(rotationTimer);
       } else {
-        // Wenn Seite wieder sichtbar, Rotation neu starten
-        rotationTimeout = setTimeout(rotateImage, animationSpeed);
+        // Animation fortsetzen wenn Tab wieder sichtbar
+        rotationTimer = setTimeout(rotateImages, 1000);
       }
     });
   });

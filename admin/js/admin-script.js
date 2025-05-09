@@ -207,6 +207,8 @@
 
       var wallId = $('input[name="wpalw_wall_id"]').val();
       var animationSpeed = $('#wpalw_animation_speed').val();
+      var transition = $('#wpalw_transition').val();
+      var gap = $('#wpalw_gap').val();
       var columns = $('#wpalw_columns').val();
       var rows = $('#wpalw_rows').val();
 
@@ -214,6 +216,24 @@
       if (animationSpeed < 1000) {
         animationSpeed = 1000;
         $('#wpalw_animation_speed').val(1000);
+      }
+
+      // Validiere transition (zwischen 100 und 2000ms)
+      if (transition < 100) {
+        transition = 100;
+        $('#wpalw_transition').val(100);
+      } else if (transition > 2000) {
+        transition = 2000;
+        $('#wpalw_transition').val(2000);
+      }
+
+      // Validiere gap (zwischen 0 und 20px)
+      if (gap < 0) {
+        gap = 0;
+        $('#wpalw_gap').val(0);
+      } else if (gap > 20) {
+        gap = 20;
+        $('#wpalw_gap').val(20);
       }
 
       $.ajax({
@@ -225,6 +245,8 @@
           wall_data: {
             id: wallId,
             animation_speed: animationSpeed,
+            transition: transition,
+            gap: gap,
             columns: columns,
             rows: rows,
             name: $('#wpalw-wall-name').val() // Füge Namen hinzu, um sicherzustellen, dass er erhalten bleibt

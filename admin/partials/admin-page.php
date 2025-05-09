@@ -12,6 +12,7 @@ $global_settings = get_option('wpalw_global_options', array());
 $default_rows = isset($global_settings['default_rows']) ? $global_settings['default_rows'] : 3;
 $default_columns = isset($global_settings['default_columns']) ? $global_settings['default_columns'] : 4;
 $default_animation_speed = isset($global_settings['default_animation_speed']) ? $global_settings['default_animation_speed'] : 5000;
+$default_gap = isset($global_settings['default_gap']) ? $global_settings['default_gap'] : 4;
 
 // Get current wall ID from GET parameter or use default
 $current_wall_id = isset($_GET['wall']) ? sanitize_text_field($_GET['wall']) : 'default';
@@ -134,6 +135,8 @@ if (!$current_wall && !empty($walls)) {
                     settings_fields('wpalw_settings');
                     $animation_speed = $current_wall ? $current_wall['animation_speed'] : 5000;
                     $columns = $current_wall ? $current_wall['columns'] : 4;
+                    $gap = isset($current_wall['gap']) ? $current_wall['gap'] : 4;
+                    $transition = isset($current_wall['transition']) ? $current_wall['transition'] : 400;
                     ?>
 
                     <input type="hidden" name="wpalw_wall_id" value="<?php echo esc_attr($current_wall_id); ?>">
@@ -145,6 +148,24 @@ if (!$current_wall && !empty($walls)) {
                             <td>
                                 <input type="number" id="wpalw_animation_speed" name="wpalw_animation_speed" value="<?php echo esc_attr($animation_speed); ?>" min="1000" step="100">
                                 <p class="description"><?php _e('Time in milliseconds between image changes (minimum 1000ms).', 'wp-animated-live-wall'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="wpalw_transition"><?php _e('Transition Duration (ms)', 'wp-animated-live-wall'); ?></label>
+                            </th>
+                            <td>
+                                <input type="number" id="wpalw_transition" name="wpalw_transition" value="<?php echo esc_attr($transition); ?>" min="100" max="2000" step="50">
+                                <p class="description"><?php _e('Duration of the fade transition effect in milliseconds.', 'wp-animated-live-wall'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="wpalw_gap"><?php _e('Grid Gap (px)', 'wp-animated-live-wall'); ?></label>
+                            </th>
+                            <td>
+                                <input type="number" id="wpalw_gap" name="wpalw_gap" value="<?php echo esc_attr($gap); ?>" min="0" max="20" step="1">
+                                <p class="description"><?php _e('Space between images in pixels.', 'wp-animated-live-wall'); ?></p>
                             </td>
                         </tr>
                         <tr>
@@ -268,6 +289,15 @@ if (!$current_wall && !empty($walls)) {
                         <input type="number" name="wpalw_global_options[default_animation_speed]" value="<?php echo esc_attr($default_animation_speed); ?>" min="1000" step="100" />
                         <p class="description">
                             <?php echo esc_html__('Default animation speed in milliseconds (min. 1000ms).', 'wp-animated-live-wall'); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><?php echo esc_html__('Default Grid Gap', 'wp-animated-live-wall'); ?></th>
+                    <td>
+                        <input type="number" name="wpalw_global_options[default_gap]" value="<?php echo esc_attr($default_gap); ?>" min="0" max="20" step="1" />
+                        <p class="description">
+                            <?php echo esc_html__('Default gap between images in pixels (0-20px).', 'wp-animated-live-wall'); ?>
                         </p>
                     </td>
                 </tr>

@@ -111,6 +111,8 @@ class WP_Animated_Live_Wall
                 'name' => sanitize_text_field($wall['name']),
                 'images' => isset($wall['images']) && is_array($wall['images']) ? $wall['images'] : array(),
                 'animation_speed' => isset($wall['animation_speed']) ? absint($wall['animation_speed']) : 5000,
+                'transition' => isset($wall['transition']) ? absint($wall['transition']) : 400,
+                'gap' => isset($wall['gap']) ? absint($wall['gap']) : 4,
                 'columns' => isset($wall['columns']) ? absint($wall['columns']) : 4,
                 'rows' => isset($wall['rows']) ? absint($wall['rows']) : 3
             );
@@ -118,6 +120,20 @@ class WP_Animated_Live_Wall
             // Ensure animation speed is at least 1000ms
             if ($sanitized_wall['animation_speed'] < 1000) {
                 $sanitized_wall['animation_speed'] = 1000;
+            }
+
+            // Ensure transition is between 100ms and 2000ms
+            if ($sanitized_wall['transition'] < 100) {
+                $sanitized_wall['transition'] = 100;
+            } elseif ($sanitized_wall['transition'] > 2000) {
+                $sanitized_wall['transition'] = 2000;
+            }
+
+            // Ensure gap is between 0px and 20px
+            if ($sanitized_wall['gap'] < 0) {
+                $sanitized_wall['gap'] = 0;
+            } elseif ($sanitized_wall['gap'] > 20) {
+                $sanitized_wall['gap'] = 20;
             }
 
             // Ensure columns is between 1 and 12
@@ -326,6 +342,8 @@ class WP_Animated_Live_Wall
             $wall_data['id'] = 'wall_' . time() . '_' . mt_rand(100, 999);
             $wall_data['images'] = array();
             $wall_data['animation_speed'] = isset($wall_data['animation_speed']) ? absint($wall_data['animation_speed']) : 5000;
+            $wall_data['transition'] = isset($wall_data['transition']) ? absint($wall_data['transition']) : 400;
+            $wall_data['gap'] = isset($wall_data['gap']) ? absint($wall_data['gap']) : 4;
             $wall_data['columns'] = isset($wall_data['columns']) ? absint($wall_data['columns']) : 4;
             $wall_data['rows'] = isset($wall_data['rows']) ? absint($wall_data['rows']) : 3;
             $walls[] = $wall_data;
@@ -341,6 +359,26 @@ class WP_Animated_Live_Wall
                         // Ensure minimum speed
                         if ($walls[$key]['animation_speed'] < 1000) {
                             $walls[$key]['animation_speed'] = 1000;
+                        }
+                    }
+
+                    if (isset($wall_data['transition'])) {
+                        $walls[$key]['transition'] = absint($wall_data['transition']);
+                        // Ensure transition is within valid range
+                        if ($walls[$key]['transition'] < 100) {
+                            $walls[$key]['transition'] = 100;
+                        } else if ($walls[$key]['transition'] > 2000) {
+                            $walls[$key]['transition'] = 2000;
+                        }
+                    }
+
+                    if (isset($wall_data['gap'])) {
+                        $walls[$key]['gap'] = absint($wall_data['gap']);
+                        // Ensure gap is within valid range
+                        if ($walls[$key]['gap'] < 0) {
+                            $walls[$key]['gap'] = 0;
+                        } else if ($walls[$key]['gap'] > 20) {
+                            $walls[$key]['gap'] = 20;
                         }
                     }
 
@@ -520,11 +558,16 @@ class WP_Animated_Live_Wall
         $default_rows = isset($global_settings['default_rows']) ? $global_settings['default_rows'] : 3;
         $default_columns = isset($global_settings['default_columns']) ? $global_settings['default_columns'] : 4;
         $default_animation_speed = isset($global_settings['default_animation_speed']) ? $global_settings['default_animation_speed'] : 5000;
+        // Wenn default_gap in den Einstellungen existiert (auch 0), diesen verwenden, sonst 4
+        $default_gap = isset($global_settings['default_gap']) ? $global_settings['default_gap'] : 4;
+        $default_transition = isset($global_settings['default_transition']) ? $global_settings['default_transition'] : 400;
 
         $attributes = shortcode_atts(array(
             'rows' => $default_rows,
             'columns' => $default_columns,
             'animation_speed' => $default_animation_speed,
+            'gap' => $default_gap,
+            'transition' => $default_transition,
             'images' => ''
         ), $atts);
 
@@ -548,7 +591,9 @@ class WP_Animated_Live_Wall
         $output .= 'data-rows="' . esc_attr($attributes['rows']) . '" ';
         $output .= 'data-columns="' . esc_attr($attributes['columns']) . '" ';
         $output .= 'data-animation-speed="' . esc_attr($attributes['animation_speed']) . '" ';
-        $output .= 'style="grid-template-columns: repeat(' . esc_attr($attributes['columns']) . ', 1fr);">';
+        $output .= 'data-transition="' . esc_attr($attributes['transition']) . '" ';
+        $output .= 'data-gap="' . esc_attr($attributes['gap']) . '" ';
+        $output .= 'style="grid-template-columns: repeat(' . esc_attr($attributes['columns']) . ', 1fr); grid-gap: ' . esc_attr($attributes['gap']) . 'px;">';
 
         // Add visible images to the grid
         foreach ($visible_image_ids as $index => $image_id) {

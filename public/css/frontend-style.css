@@ -6,6 +6,7 @@
     width: 100%;
     margin: 0 auto;
     box-sizing: border-box;
+    max-width: 100%;
 }
 
 .wpalw-grid {
@@ -64,8 +65,6 @@
     grid-template-columns: repeat(12, 1fr);
 }
 
-
-
 /* Image styling */
 .wpalw-grid-item {
     position: relative;
@@ -94,30 +93,32 @@
 /* Optimized styles for square tiles */
 .wp-animated-live-wall {
     display: grid;
-    grid-gap: 4px;
     width: 100%;
     max-width: 100%;
-    /* Grid wird dynamisch per JavaScript bzw. durch Inline-Style gesetzt */
+    aspect-ratio: var(--columns) / var(--rows);
+    /* Dynamic Aspect Ratio basierend auf Grid */
 }
 
 .wall-tile {
     position: relative;
     aspect-ratio: 1/1;
-    /* Moderne Browser */
+    /* Square tile */
     overflow: hidden;
 }
 
-/* Fallback für Browser ohne Unterstützung von aspect-ratio */
-.wall-tile::before {
-    content: '';
-    float: left;
-    padding-top: 100%;
-}
+/* Fallback für Browser ohne aspect-ratio Unterstützung */
+@supports not (aspect-ratio: 1/1) {
+    .wall-tile::before {
+        content: '';
+        float: left;
+        padding-top: 100%;
+    }
 
-.wall-tile::after {
-    content: '';
-    display: block;
-    clear: both;
+    .wall-tile::after {
+        content: '';
+        display: block;
+        clear: both;
+    }
 }
 
 .wall-tile img {
@@ -131,9 +132,9 @@
     transition: opacity 0.3s ease-in-out;
 }
 
-/* Versteckte Bildcontainer für die Rotation */
+/* Versteckte Container nicht anzeigen */
 .wpalw-hidden-images {
-    display: none;
+    display: none !important;
     visibility: hidden;
     position: absolute;
     left: -9999px;
