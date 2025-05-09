@@ -160,6 +160,15 @@ class WP_Animated_Live_Wall
             }
         }
 
+        // Sanitize animation speed
+        if (isset($input['default_animation_speed'])) {
+            $sanitized['default_animation_speed'] = absint($input['default_animation_speed']);
+            // Ensure animation speed is at least 1000ms
+            if ($sanitized['default_animation_speed'] < 1000) {
+                $sanitized['default_animation_speed'] = 5000;
+            }
+        }
+
         return $sanitized;
     }
 
@@ -504,10 +513,12 @@ class WP_Animated_Live_Wall
         // Default values from global settings or fallback if not set
         $default_rows = isset($global_settings['default_rows']) ? $global_settings['default_rows'] : 3;
         $default_columns = isset($global_settings['default_columns']) ? $global_settings['default_columns'] : 4;
+        $default_animation_speed = isset($global_settings['default_animation_speed']) ? $global_settings['default_animation_speed'] : 5000;
 
         $attributes = shortcode_atts(array(
             'rows' => $default_rows,
             'columns' => $default_columns,
+            'animation_speed' => $default_animation_speed,
             'images' => ''
         ), $atts);
 
@@ -530,6 +541,7 @@ class WP_Animated_Live_Wall
         $output = '<div class="wp-animated-live-wall" ';
         $output .= 'data-rows="' . esc_attr($attributes['rows']) . '" ';
         $output .= 'data-columns="' . esc_attr($attributes['columns']) . '" ';
+        $output .= 'data-animation-speed="' . esc_attr($attributes['animation_speed']) . '" ';
         $output .= 'style="grid-template-columns: repeat(' . esc_attr($attributes['columns']) . ', 1fr);">';
 
         // Add visible images to the grid

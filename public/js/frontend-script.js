@@ -5,6 +5,9 @@ jQuery(document).ready(function ($) {
     const rows = parseInt(wall.data('rows')) || 3;
     const columns = parseInt(wall.data('columns')) || 4;
 
+    // Animationsgeschwindigkeit aus Datenattribut oder Standardwert nehmen
+    const animationSpeed = parseInt(wall.data('animation-speed')) || 5000;
+
     // Setze CSS-Variablen für das Grid-Layout
     wall.css({
       'grid-template-columns': `repeat(${columns}, 1fr)`,
@@ -22,10 +25,11 @@ jQuery(document).ready(function ($) {
       return;
     }
 
-    // Starte Bildrotation alle 5 Sekunden (oder benutzerdefinierter Zeitraum)
-    const animationSpeed = wall.data('animation-speed') || 5000;
+    // Rotation-Timeout-ID für späteren Zugriff speichern
+    let rotationTimeout;
 
-    setInterval(function () {
+    // Funktion für die Bildrotation definieren
+    function rotateImage() {
       // Wähle eine zufällige sichtbare Kachel
       const randomTileIndex = Math.floor(Math.random() * visibleTiles.length);
       const randomTile = $(visibleTiles[randomTileIndex]);
@@ -67,8 +71,25 @@ jQuery(document).ready(function ($) {
         randomHiddenDiv.attr('data-id', visibleId);
 
         // Blende das neue Bild ein
-        visibleImg.fadeIn(400);
+        visibleImg.fadeIn(400, function () {
+          // Setze nächste Rotation nach Animation
+          rotationTimeout = setTimeout(rotateImage, animationSpeed);
+        });
       });
-    }, animationSpeed);
+    }
+
+    // Starte die erste Rotation nach Verzögerung
+    rotationTimeout = setTimeout(rotateImage, animationSpeed);
+
+    // Pausiere die Rotation, wenn das Fenster nicht sichtbar ist (Tab-Wechsel, etc.)
+    $(document).on('visibilitychange', function () {
+      if (document.hidden) {
+        // Wenn Seite nicht sichtbar, Rotation stoppen
+        clearTimeout(rotationTimeout);
+      } else {
+        // Wenn Seite wieder sichtbar, Rotation neu starten
+        rotationTimeout = setTimeout(rotateImage, animationSpeed);
+      }
+    });
   });
 });

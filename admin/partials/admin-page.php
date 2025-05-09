@@ -11,6 +11,7 @@ $walls = get_option('wpalw_walls', array());
 $global_settings = get_option('wpalw_global_options', array());
 $default_rows = isset($global_settings['default_rows']) ? $global_settings['default_rows'] : 3;
 $default_columns = isset($global_settings['default_columns']) ? $global_settings['default_columns'] : 4;
+$default_animation_speed = isset($global_settings['default_animation_speed']) ? $global_settings['default_animation_speed'] : 5000;
 
 // Get current wall ID from GET parameter or use default
 $current_wall_id = isset($_GET['wall']) ? sanitize_text_field($_GET['wall']) : 'default';
@@ -38,40 +39,8 @@ if (!$current_wall && !empty($walls)) {
     <h1><?php echo esc_html__('Animated Live Wall', 'wp-animated-live-wall'); ?></h1>
 
     <div id="wpalw-admin-tabs" class="nav-tab-wrapper">
-        <a href="#tab-global" class="nav-tab <?php echo $active_tab === 'global' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></a>
         <a href="#tab-walls" class="nav-tab <?php echo $active_tab === 'walls' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__('Manage Walls', 'wp-animated-live-wall'); ?></a>
-    </div>
-
-    <!-- Global Settings Tab -->
-    <div id="tab-global" class="wpalw-tab-content" style="<?php echo $active_tab === 'global' ? '' : 'display:none;'; ?>">
-        <form method="post" action="options.php" class="wpalw-settings-form">
-            <?php settings_fields('wpalw_settings'); ?>
-            <h2><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></h2>
-            <p class="description"><?php echo esc_html__('Set default values for all animated live walls.', 'wp-animated-live-wall'); ?></p>
-
-            <table class="form-table">
-                <tr valign="top">
-                    <th scope="row"><?php echo esc_html__('Default Rows', 'wp-animated-live-wall'); ?></th>
-                    <td>
-                        <input type="number" name="wpalw_global_options[default_rows]" value="<?php echo esc_attr($default_rows); ?>" min="1" max="12" step="1" />
-                        <p class="description">
-                            <?php echo esc_html__('Default number of rows for new walls and shortcodes.', 'wp-animated-live-wall'); ?>
-                        </p>
-                    </td>
-                </tr>
-                <tr valign="top">
-                    <th scope="row"><?php echo esc_html__('Default Columns', 'wp-animated-live-wall'); ?></th>
-                    <td>
-                        <input type="number" name="wpalw_global_options[default_columns]" value="<?php echo esc_attr($default_columns); ?>" min="1" max="12" step="1" />
-                        <p class="description">
-                            <?php echo esc_html__('Default number of columns for new walls and shortcodes.', 'wp-animated-live-wall'); ?>
-                        </p>
-                    </td>
-                </tr>
-            </table>
-
-            <?php submit_button(__('Save Global Settings', 'wp-animated-live-wall')); ?>
-        </form>
+        <a href="#tab-global" class="nav-tab <?php echo $active_tab === 'global' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></a>
     </div>
 
     <!-- Manage Walls Tab -->
@@ -266,6 +235,48 @@ if (!$current_wall && !empty($walls)) {
             </div>
         </div>
     </div>
+
+    <!-- Global Settings Tab -->
+    <div id="tab-global" class="wpalw-tab-content" style="<?php echo $active_tab === 'global' ? '' : 'display:none;'; ?>">
+        <form method="post" action="options.php" class="wpalw-settings-form">
+            <?php settings_fields('wpalw_settings'); ?>
+            <h2><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></h2>
+            <p class="description"><?php echo esc_html__('Set default values for all animated live walls.', 'wp-animated-live-wall'); ?></p>
+
+            <table class="form-table">
+                <tr valign="top">
+                    <th scope="row"><?php echo esc_html__('Default Rows', 'wp-animated-live-wall'); ?></th>
+                    <td>
+                        <input type="number" name="wpalw_global_options[default_rows]" value="<?php echo esc_attr($default_rows); ?>" min="1" max="12" step="1" />
+                        <p class="description">
+                            <?php echo esc_html__('Default number of rows for new walls and shortcodes.', 'wp-animated-live-wall'); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><?php echo esc_html__('Default Columns', 'wp-animated-live-wall'); ?></th>
+                    <td>
+                        <input type="number" name="wpalw_global_options[default_columns]" value="<?php echo esc_attr($default_columns); ?>" min="1" max="12" step="1" />
+                        <p class="description">
+                            <?php echo esc_html__('Default number of columns for new walls and shortcodes.', 'wp-animated-live-wall'); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><?php echo esc_html__('Default Animation Speed', 'wp-animated-live-wall'); ?></th>
+                    <td>
+                        <input type="number" name="wpalw_global_options[default_animation_speed]" value="<?php echo esc_attr($default_animation_speed); ?>" min="1000" step="100" />
+                        <p class="description">
+                            <?php echo esc_html__('Default animation speed in milliseconds (min. 1000ms).', 'wp-animated-live-wall'); ?>
+                        </p>
+                    </td>
+                </tr>
+            </table>
+
+            <?php submit_button(__('Save Global Settings', 'wp-animated-live-wall')); ?>
+        </form>
+    </div>
+
 </div>
 
 <script>
