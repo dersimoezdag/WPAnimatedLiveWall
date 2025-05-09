@@ -2,30 +2,43 @@
   'use strict';
 
   $(document).ready(function () {
-    // Initialize live wall
-    initLiveWall();
+    // Initialize all live walls on the page
+    $('.wpalw-container').each(function () {
+      initLiveWall($(this));
+    });
 
-    function initLiveWall() {
-      // Get all images in the grid
-      var $images = $('.wpalw-image');
+    /**
+     * Initialize a specific live wall
+     */
+    function initLiveWall($container) {
+      // Get all images in this wall
+      var $images = $container.find('.wpalw-image');
 
       if ($images.length === 0) {
         return;
       }
 
-      // Collect all images from the wall for random switching
-      var allImageUrls = collectAllImageUrls();
+      var wallId = $container.data('wall-id');
+
+      // Collect all image URLs from this wall
+      var allImageUrls = collectAllImageUrls($images);
+
+      if (allImageUrls.length <= 1) {
+        return; // Need at least 2 images to switch
+      }
 
       // Start animations after a short delay to ensure all images are loaded
       setTimeout(function () {
-        startRandomSwitching(allImageUrls);
+        startSingleTileChanges($container, $images, allImageUrls);
       }, 1000);
     }
 
-    // Collect all image URLs from the live wall
-    function collectAllImageUrls() {
+    /**
+     * Collect all image URLs from a set of images
+     */
+    function collectAllImageUrls($images) {
       var urls = [];
-      $('.wpalw-image').each(function () {
+      $images.each(function () {
         var src = $(this).attr('src');
         if (src) {
           urls.push(src);
@@ -34,47 +47,71 @@
       return urls;
     }
 
-    // Start random switching of images
-    function startRandomSwitching(allImageUrls) {
-      if (allImageUrls.length <= 1) {
-        return; // Need at least 2 images to switch
-      }
-
+    /**
+     * Start changing one random tile at a time
+     */
+    function startSingleTileChanges($container, $images, allImageUrls) {
       var animationSpeed = parseInt(wpalw_data.animation_speed) || 5000;
 
-      // For each image, set a random interval to change
-      $('.wpalw-image').each(function () {
-        var $image = $(this);
+      // Keep track of currently displayed images
+      var currentImageMap = {};
 
-        // Set individual random timing for each image
-        var randomDelay = Math.floor(Math.random() * animationSpeed) + 1000;
-        setInterval(function () {
-          switchImage($image, allImageUrls);
-        }, randomDelay);
+      // Initialize the image map with current images
+      $images.each(function () {
+        var src = $(this).attr('src');
+        currentImageMap[src] = true;
       });
-    }
 
-    // Switch an image to a random one
-    function switchImage($image, allImageUrls) {
-      if (allImageUrls.length <= 1) {
-        return; // Need at least 2 images to switch
+      // Function to change a random tile
+      function changeRandomTile() {
+        // Select a random tile
+        var randomIndex = Math.floor(Math.random() * $images.length);
+        var $randomImage = $($images[randomIndex]);
+
+        // Switch this image (ensuring no duplicates when possible)
+        switchImage($randomImage, allImageUrls, currentImageMap);
+
+        // Schedule the next change after the animation speed delay
+        setTimeout(changeRandomTile, animationSpeed);
       }
 
+      // Start the process
+      changeRandomTile();
+    }
+
+    /**
+     * Switch an image to a random one, avoiding duplicates if possible
+     */
+    function switchImage($image, allImageUrls, currentImageMap) {
       var currentSrc = $image.attr('src');
-      var currentIndex = allImageUrls.indexOf(currentSrc);
 
-      // Randomly select a different image
-      var newIndex;
-      var attempts = 0;
-      var maxAttempts = 10;
+      // Remove the current image from the map before selecting a new one
+      delete currentImageMap[currentSrc];
 
-      do {
-        newIndex = Math.floor(Math.random() * allImageUrls.length);
-        attempts++;
-      } while (newIndex === currentIndex && attempts < maxAttempts);
+      // Find images that aren't currently displayed anywhere
+      var availableImages = [];
+      for (var i = 0; i < allImageUrls.length; i++) {
+        if (!currentImageMap[allImageUrls[i]]) {
+          availableImages.push(allImageUrls[i]);
+        }
+      }
 
-      // Get new image URL
-      var newSrc = allImageUrls[newIndex];
+      var newSrc;
+
+      // If we have available images that aren't displayed elsewhere, use one
+      if (availableImages.length > 0) {
+        var randomAvailableIndex = Math.floor(Math.random() * availableImages.length);
+        newSrc = availableImages[randomAvailableIndex];
+      } else {
+        // Otherwise just pick any image that's different from the current one
+        do {
+          var randomIndex = Math.floor(Math.random() * allImageUrls.length);
+          newSrc = allImageUrls[randomIndex];
+        } while (newSrc === currentSrc && allImageUrls.length > 1);
+      }
+
+      // Add the new image to the current image map
+      currentImageMap[newSrc] = true;
 
       // Perform the animation
       $image.fadeOut(400, function () {

@@ -2,6 +2,40 @@
  * Admin styles for WP Animated Live Wall
  */
 
+/* Wall management bar */
+.wpalw-walls-bar {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.wpalw-walls-dropdown {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.wpalw-walls-dropdown select {
+    margin-right: 10px;
+    min-width: 200px;
+}
+
+.wpalw-wall-title {
+    display: flex;
+    align-items: center;
+}
+
+.wpalw-wall-title input {
+    margin-right: 10px;
+    min-width: 250px;
+}
+
 /* Tab Navigation */
 .wpalw-admin-page .nav-tab-wrapper {
     margin-bottom: 20px;

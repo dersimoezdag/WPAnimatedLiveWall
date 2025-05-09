@@ -24,17 +24,30 @@ class WP_Animated_Live_Wall
         add_shortcode('animated_live_wall', array($this, 'live_wall_shortcode'));
 
         // AJAX handlers
+        add_action('wp_ajax_wpalw_save_wall', array($this, 'ajax_save_wall'));
+        add_action('wp_ajax_wpalw_remove_wall', array($this, 'ajax_remove_wall'));
         add_action('wp_ajax_wpalw_save_image', array($this, 'ajax_save_image'));
         add_action('wp_ajax_wpalw_remove_image', array($this, 'ajax_remove_image'));
+        add_action('wp_ajax_wpalw_update_image_order', array($this, 'ajax_update_image_order'));
     }
-
     /**
      * Plugin activation.
      */
     public function activate()
     {
-        // Create custom database tables if needed
-        // For now, we'll store settings in wp_options
+        // Default settings
+        if (!get_option('wpalw_walls')) {
+            $default_wall = array(
+                'id' => 'default',
+                'name' => __('Default Wall', 'wp-animated-live-wall'),
+                'images' => array(),
+                'animation_speed' => 5000,
+                'columns' => 4,
+                'rows' => 3
+            );
+
+            update_option('wpalw_walls', array($default_wall));
+        }
     }
 
     /**
@@ -50,14 +63,13 @@ class WP_Animated_Live_Wall
      */
     public function add_admin_menu()
     {
-        add_menu_page(
+        add_submenu_page(
+            'options-general.php',
             __('Animated Live Wall', 'wp-animated-live-wall'),
             __('Live Wall', 'wp-animated-live-wall'),
             'manage_options',
             'wp-animated-live-wall',
-            array($this, 'admin_page'),
-            'dashicons-format-gallery',
-            30
+            array($this, 'admin_page')
         );
     }
 
@@ -68,49 +80,70 @@ class WP_Animated_Live_Wall
     {
         register_setting(
             'wpalw_settings',
-            'wpalw_images',
-            array($this, 'sanitize_images_setting')
+            'wpalw_walls',
+            array($this, 'sanitize_walls_setting')
         );
 
         register_setting(
             'wpalw_settings',
-            'wpalw_options',
-            array($this, 'sanitize_options_setting')
+            'wpalw_global_options',
+            array($this, 'sanitize_global_options_setting')
         );
     }
 
     /**
-     * Sanitize images settings.
+     * Sanitize walls settings.
      */
-    public function sanitize_images_setting($input)
+    public function sanitize_walls_setting($input)
     {
-        return is_array($input) ? $input : array();
+        if (!is_array($input)) {
+            return array();
+        }
+
+        $sanitized = array();
+
+        foreach ($input as $wall) {
+            if (!isset($wall['id']) || !isset($wall['name'])) {
+                continue;
+            }
+            $sanitized_wall = array(
+                'id' => sanitize_key($wall['id']),
+                'name' => sanitize_text_field($wall['name']),
+                'images' => isset($wall['images']) && is_array($wall['images']) ? $wall['images'] : array(),
+                'animation_speed' => isset($wall['animation_speed']) ? absint($wall['animation_speed']) : 5000,
+                'columns' => isset($wall['columns']) ? absint($wall['columns']) : 4,
+                'rows' => isset($wall['rows']) ? absint($wall['rows']) : 3
+            );
+
+            // Ensure animation speed is at least 1000ms
+            if ($sanitized_wall['animation_speed'] < 1000) {
+                $sanitized_wall['animation_speed'] = 1000;
+            }
+
+            // Ensure columns is between 1 and 12
+            if ($sanitized_wall['columns'] < 1 || $sanitized_wall['columns'] > 12) {
+                $sanitized_wall['columns'] = 4;
+            }
+
+            // Ensure rows is between 1 and 12
+            if ($sanitized_wall['rows'] < 1 || $sanitized_wall['rows'] > 12) {
+                $sanitized_wall['rows'] = 3;
+            }
+
+            $sanitized[] = $sanitized_wall;
+        }
+
+        return $sanitized;
     }
 
     /**
-     * Sanitize options settings.
+     * Sanitize global options settings.
      */
-    public function sanitize_options_setting($input)
+    public function sanitize_global_options_setting($input)
     {
         $sanitized = array();
 
-        if (isset($input['animation_speed'])) {
-            $sanitized['animation_speed'] = absint($input['animation_speed']);
-            if ($sanitized['animation_speed'] < 1000) {
-                $sanitized['animation_speed'] = 1000;
-            }
-        } else {
-            $sanitized['animation_speed'] = 5000; // Default: 5 seconds
-        }
-
-        if (isset($input['columns'])) {
-            $sanitized['columns'] = absint($input['columns']);
-            if ($sanitized['columns'] < 1 || $sanitized['columns'] > 12) {
-                $sanitized['columns'] = 4;
-            }
-        } else {
-            $sanitized['columns'] = 4; // Default: 4 columns
-        }
+        // Add any global settings here if needed
 
         return $sanitized;
     }
@@ -120,7 +153,7 @@ class WP_Animated_Live_Wall
      */
     public function enqueue_admin_styles_scripts($hook)
     {
-        if ('toplevel_page_wp-animated-live-wall' !== $hook) {
+        if ('settings_page_wp-animated-live-wall' !== $hook) {
             return;
         }
 
@@ -136,7 +169,7 @@ class WP_Animated_Live_Wall
         wp_enqueue_script(
             'wpalw-admin-script',
             WPALW_PLUGIN_URL . 'admin/js/admin-script.js',
-            array('jquery', 'jquery-ui-sortable'),
+            array('jquery', 'jquery-ui-sortable', 'jquery-ui-tabs'),
             WPALW_VERSION,
             true
         );
@@ -147,6 +180,8 @@ class WP_Animated_Live_Wall
             'i18n' => array(
                 'select_images' => __('Select Images', 'wp-animated-live-wall'),
                 'remove' => __('Remove', 'wp-animated-live-wall'),
+                'confirm_remove_wall' => __('Are you sure you want to delete this wall?', 'wp-animated-live-wall'),
+                'new_wall' => __('New Wall', 'wp-animated-live-wall')
             ),
         ));
     }
@@ -171,14 +206,7 @@ class WP_Animated_Live_Wall
             true
         );
 
-        $options = get_option('wpalw_options', array(
-            'animation_speed' => 5000,
-            'columns' => 4,
-        ));
-
-        wp_localize_script('wpalw-frontend-script', 'wpalw_data', array(
-            'animation_speed' => $options['animation_speed'],
-        ));
+        // We'll pass specific options via the shortcode
     }
 
     /**
@@ -188,27 +216,62 @@ class WP_Animated_Live_Wall
     {
         require_once WPALW_PLUGIN_DIR . 'admin/partials/admin-page.php';
     }
-
     /**
      * Live wall shortcode callback.
      */
     public function live_wall_shortcode($atts)
     {
         $atts = shortcode_atts(array(
+            'id' => 'default',
             'columns' => '',
+            'rows' => '',
         ), $atts, 'animated_live_wall');
 
-        $options = get_option('wpalw_options', array(
-            'columns' => 4,
-        ));
+        $wall_id = sanitize_key($atts['id']);
 
-        $columns = !empty($atts['columns']) ? absint($atts['columns']) : $options['columns'];
+        // Get all walls
+        $walls = get_option('wpalw_walls', array());
 
-        $images = get_option('wpalw_images', array());
+        // Find the requested wall
+        $wall = null;
+        foreach ($walls as $w) {
+            if ($w['id'] === $wall_id) {
+                $wall = $w;
+                break;
+            }
+        }
 
-        if (empty($images)) {
+        // If wall not found, try to use default
+        if (!$wall) {
+            foreach ($walls as $w) {
+                if ($w['id'] === 'default') {
+                    $wall = $w;
+                    break;
+                }
+            }
+
+            // If still not found, return error
+            if (!$wall) {
+                return '<p>' . __('Live wall not found.', 'wp-animated-live-wall') . '</p>';
+            }
+        }
+
+        // Check if wall has images
+        if (empty($wall['images'])) {
             return '<p>' . __('No images found for the live wall.', 'wp-animated-live-wall') . '</p>';
         }
+
+        // Override columns if specified in shortcode
+        $columns = !empty($atts['columns']) ? absint($atts['columns']) : $wall['columns'];
+
+        // Override rows if specified in shortcode
+        $rows = !empty($atts['rows']) ? absint($atts['rows']) : (isset($wall['rows']) ? $wall['rows'] : 3);        // Set data for JavaScript
+        wp_localize_script('wpalw-frontend-script', 'wpalw_data', array(
+            'animation_speed' => $wall['animation_speed'],
+        ));
+
+        // Get images for display
+        $images = $wall['images'];
 
         ob_start();
         include WPALW_PLUGIN_DIR . 'public/partials/frontend-display.php';
@@ -216,7 +279,100 @@ class WP_Animated_Live_Wall
     }
 
     /**
-     * AJAX handler to save images.
+     * AJAX handler to save a wall.
+     */
+    public function ajax_save_wall()
+    {
+        check_ajax_referer('wpalw-admin-nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permission denied');
+        }
+
+        $wall_data = isset($_POST['wall_data']) ? $_POST['wall_data'] : null;
+
+        if (!$wall_data || !isset($wall_data['name'])) {
+            wp_send_json_error('Invalid wall data');
+        }
+
+        $walls = get_option('wpalw_walls', array());        // Generate ID if new wall
+        if (empty($wall_data['id'])) {
+            $wall_data['id'] = 'wall_' . time() . '_' . mt_rand(100, 999);
+            $wall_data['images'] = array();
+            $wall_data['animation_speed'] = 5000;
+            $wall_data['columns'] = 4;
+            $wall_data['rows'] = 3;
+            $walls[] = $wall_data;
+        } else {
+            // Update existing wall
+            foreach ($walls as $key => $wall) {
+                if ($wall['id'] === $wall_data['id']) {
+                    // Update name and other properties
+                    $walls[$key]['name'] = sanitize_text_field($wall_data['name']);
+
+                    if (isset($wall_data['animation_speed'])) {
+                        $walls[$key]['animation_speed'] = absint($wall_data['animation_speed']);
+                    }
+
+                    if (isset($wall_data['columns'])) {
+                        $walls[$key]['columns'] = absint($wall_data['columns']);
+                    }
+
+                    if (isset($wall_data['rows'])) {
+                        $walls[$key]['rows'] = absint($wall_data['rows']);
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        update_option('wpalw_walls', $walls);
+
+        wp_send_json_success(array(
+            'id' => $wall_data['id'],
+            'name' => sanitize_text_field($wall_data['name'])
+        ));
+    }
+
+    /**
+     * AJAX handler to remove a wall.
+     */
+    public function ajax_remove_wall()
+    {
+        check_ajax_referer('wpalw-admin-nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permission denied');
+        }
+
+        $wall_id = isset($_POST['wall_id']) ? sanitize_key($_POST['wall_id']) : '';
+
+        if (empty($wall_id)) {
+            wp_send_json_error('Invalid wall ID');
+        }
+
+        // Can't remove default wall
+        if ($wall_id === 'default') {
+            wp_send_json_error('Cannot remove default wall');
+        }
+
+        $walls = get_option('wpalw_walls', array());
+        $updated_walls = array();
+
+        foreach ($walls as $wall) {
+            if ($wall['id'] !== $wall_id) {
+                $updated_walls[] = $wall;
+            }
+        }
+
+        update_option('wpalw_walls', $updated_walls);
+
+        wp_send_json_success();
+    }
+
+    /**
+     * AJAX handler to save an image to a specific wall.
      */
     public function ajax_save_image()
     {
@@ -227,17 +383,24 @@ class WP_Animated_Live_Wall
         }
 
         $image_id = isset($_POST['image_id']) ? absint($_POST['image_id']) : 0;
+        $wall_id = isset($_POST['wall_id']) ? sanitize_key($_POST['wall_id']) : '';
 
-        if (!$image_id) {
-            wp_send_json_error('Invalid image ID');
+        if (!$image_id || empty($wall_id)) {
+            wp_send_json_error('Invalid data');
         }
 
-        $images = get_option('wpalw_images', array());
+        $walls = get_option('wpalw_walls', array());
 
-        if (!in_array($image_id, $images)) {
-            $images[] = $image_id;
-            update_option('wpalw_images', $images);
+        foreach ($walls as $key => $wall) {
+            if ($wall['id'] === $wall_id) {
+                if (!in_array($image_id, $wall['images'])) {
+                    $walls[$key]['images'][] = $image_id;
+                }
+                break;
+            }
         }
+
+        update_option('wpalw_walls', $walls);
 
         $image_data = wp_get_attachment_image_src($image_id, 'medium');
 
@@ -248,7 +411,7 @@ class WP_Animated_Live_Wall
     }
 
     /**
-     * AJAX handler to remove images.
+     * AJAX handler to remove an image from a specific wall.
      */
     public function ajax_remove_image()
     {
@@ -259,19 +422,58 @@ class WP_Animated_Live_Wall
         }
 
         $image_id = isset($_POST['image_id']) ? absint($_POST['image_id']) : 0;
+        $wall_id = isset($_POST['wall_id']) ? sanitize_key($_POST['wall_id']) : '';
 
-        if (!$image_id) {
-            wp_send_json_error('Invalid image ID');
+        if (!$image_id || empty($wall_id)) {
+            wp_send_json_error('Invalid data');
         }
 
-        $images = get_option('wpalw_images', array());
-        $index = array_search($image_id, $images);
+        $walls = get_option('wpalw_walls', array());
 
-        if ($index !== false) {
-            unset($images[$index]);
-            $images = array_values($images); // Reindex array
-            update_option('wpalw_images', $images);
+        foreach ($walls as $key => $wall) {
+            if ($wall['id'] === $wall_id) {
+                $index = array_search($image_id, $wall['images']);
+                if ($index !== false) {
+                    unset($walls[$key]['images'][$index]);
+                    $walls[$key]['images'] = array_values($walls[$key]['images']); // Reindex array
+                }
+                break;
+            }
         }
+
+        update_option('wpalw_walls', $walls);
+
+        wp_send_json_success();
+    }
+
+    /**
+     * AJAX handler to update image order in a wall.
+     */
+    public function ajax_update_image_order()
+    {
+        check_ajax_referer('wpalw-admin-nonce', 'nonce');
+
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Permission denied');
+        }
+
+        $wall_id = isset($_POST['wall_id']) ? sanitize_key($_POST['wall_id']) : '';
+        $image_ids = isset($_POST['image_ids']) ? array_map('absint', $_POST['image_ids']) : array();
+
+        if (empty($wall_id) || empty($image_ids)) {
+            wp_send_json_error('Invalid data');
+        }
+
+        $walls = get_option('wpalw_walls', array());
+
+        foreach ($walls as $key => $wall) {
+            if ($wall['id'] === $wall_id) {
+                $walls[$key]['images'] = $image_ids;
+                break;
+            }
+        }
+
+        update_option('wpalw_walls', $walls);
 
         wp_send_json_success();
     }

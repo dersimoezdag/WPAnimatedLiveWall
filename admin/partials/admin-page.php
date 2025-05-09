@@ -1,6 +1,56 @@
 <div class="wrap wpalw-admin-page">
     <h1><?php _e('Animated Live Wall', 'wp-animated-live-wall'); ?></h1>
 
+    <?php
+    // Get all walls
+    $walls = get_option('wpalw_walls', array());
+    $current_wall_id = isset($_GET['wall']) ? sanitize_key($_GET['wall']) : (count($walls) > 0 ? $walls[0]['id'] : 'default');
+
+    // Get the current wall data
+    $current_wall = null;
+    foreach ($walls as $wall) {
+        if ($wall['id'] === $current_wall_id) {
+            $current_wall = $wall;
+            break;
+        }
+    }
+
+    // Fallback to first wall if current not found
+    if (!$current_wall && count($walls) > 0) {
+        $current_wall = $walls[0];
+        $current_wall_id = $current_wall['id'];
+    }
+    ?>
+
+    <div class="wpalw-walls-bar">
+        <div class="wpalw-walls-dropdown">
+            <select id="wpalw-select-wall">
+                <?php foreach ($walls as $wall) : ?>
+                    <option value="<?php echo esc_attr($wall['id']); ?>" <?php selected($wall['id'], $current_wall_id); ?>>
+                        <?php echo esc_html($wall['name']); ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+
+            <button type="button" class="button" id="wpalw-add-wall">
+                <span class="dashicons dashicons-plus"></span> <?php _e('Add New Wall', 'wp-animated-live-wall'); ?>
+            </button>
+
+            <?php if ($current_wall && $current_wall['id'] !== 'default') : ?>
+                <button type="button" class="button" id="wpalw-remove-wall" data-id="<?php echo esc_attr($current_wall['id']); ?>">
+                    <span class="dashicons dashicons-trash"></span> <?php _e('Delete Wall', 'wp-animated-live-wall'); ?>
+                </button>
+            <?php endif; ?>
+        </div>
+
+        <div class="wpalw-wall-title">
+            <input type="text" id="wpalw-wall-name" value="<?php echo $current_wall ? esc_attr($current_wall['name']) : ''; ?>" placeholder="<?php _e('Wall Name', 'wp-animated-live-wall'); ?>">
+            <button type="button" class="button button-primary" id="wpalw-save-wall-name" data-id="<?php echo $current_wall ? esc_attr($current_wall['id']) : ''; ?>">
+                <?php _e('Save Name', 'wp-animated-live-wall'); ?>
+            </button>
+        </div>
+    </div>
+
     <div class="nav-tab-wrapper">
         <a href="#images-tab" class="nav-tab nav-tab-active"><?php _e('Images', 'wp-animated-live-wall'); ?></a>
         <a href="#settings-tab" class="nav-tab"><?php _e('Settings', 'wp-animated-live-wall'); ?></a>
@@ -14,23 +64,24 @@
 
             <form method="post" action="options.php" id="wpalw-images-form">
                 <?php settings_fields('wpalw_settings'); ?>
+                <input type="hidden" id="wpalw-current-wall-id" name="wpalw_current_wall_id" value="<?php echo esc_attr($current_wall_id); ?>">
 
                 <div class="wpalw-actions">
-                    <button type="button" class="button button-primary" id="wpalw-add-images">
+                    <button type="button" class="button button-primary" id="wpalw-add-images" data-wall-id="<?php echo esc_attr($current_wall_id); ?>">
                         <span class="dashicons dashicons-plus"></span> <?php _e('Add Images', 'wp-animated-live-wall'); ?>
                     </button>
                 </div>
 
-                <div class="wpalw-image-list" id="wpalw-image-list">
+                <div class="wpalw-image-list" id="wpalw-image-list" data-wall-id="<?php echo esc_attr($current_wall_id); ?>">
                     <?php
-                    $images = get_option('wpalw_images', array());
+                    $images = $current_wall ? $current_wall['images'] : array();
                     if (!empty($images)) :
                         foreach ($images as $image_id) :
                             $image_url = wp_get_attachment_image_src($image_id, 'medium');
                             if ($image_url) :
                     ?>
                                 <div class="wpalw-image-item" data-id="<?php echo esc_attr($image_id); ?>">
-                                    <input type="hidden" name="wpalw_images[]" value="<?php echo esc_attr($image_id); ?>">
+                                    <input type="hidden" name="wpalw_image_ids[]" value="<?php echo esc_attr($image_id); ?>">
                                     <div class="wpalw-image-preview">
                                         <img src="<?php echo esc_url($image_url[0]); ?>" alt="">
                                     </div>
@@ -55,23 +106,21 @@
             <h2><?php _e('Live Wall Settings', 'wp-animated-live-wall'); ?></h2>
             <p><?php _e('Configure the behavior and appearance of your animated live wall.', 'wp-animated-live-wall'); ?></p>
 
-            <form method="post" action="options.php">
+            <form method="post" action="options.php" id="wpalw-settings-form">
                 <?php
                 settings_fields('wpalw_settings');
-                $options = get_option('wpalw_options', array(
-                    'animation_speed' => 5000,
-                    'columns' => 4,
-                ));
+                $animation_speed = $current_wall ? $current_wall['animation_speed'] : 5000;
+                $columns = $current_wall ? $current_wall['columns'] : 4;
                 ?>
 
+                <input type="hidden" name="wpalw_wall_id" value="<?php echo esc_attr($current_wall_id); ?>">
                 <table class="form-table">
                     <tr>
                         <th scope="row">
                             <label for="wpalw_animation_speed"><?php _e('Animation Speed (ms)', 'wp-animated-live-wall'); ?></label>
                         </th>
                         <td>
-                            <input type="number" id="wpalw_animation_speed" name="wpalw_options[animation_speed]"
-                                value="<?php echo esc_attr($options['animation_speed']); ?>" min="1000" step="100">
+                            <input type="number" id="wpalw_animation_speed" name="wpalw_animation_speed" value="<?php echo esc_attr($animation_speed); ?>" min="1000" step="100">
                             <p class="description"><?php _e('Time in milliseconds between image changes (minimum 1000ms).', 'wp-animated-live-wall'); ?></p>
                         </td>
                     </tr>
@@ -80,14 +129,32 @@
                             <label for="wpalw_columns"><?php _e('Grid Columns', 'wp-animated-live-wall'); ?></label>
                         </th>
                         <td>
-                            <select id="wpalw_columns" name="wpalw_options[columns]">
+                            <select id="wpalw_columns" name="wpalw_columns">
                                 <?php for ($i = 1; $i <= 12; $i++) : ?>
-                                    <option value="<?php echo $i; ?>" <?php selected($options['columns'], $i); ?>>
+                                    <option value="<?php echo $i; ?>" <?php selected($columns, $i); ?>>
                                         <?php echo $i; ?>
                                     </option>
                                 <?php endfor; ?>
                             </select>
                             <p class="description"><?php _e('Number of columns in the image grid.', 'wp-animated-live-wall'); ?></p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row">
+                            <label for="wpalw_rows"><?php _e('Grid Rows', 'wp-animated-live-wall'); ?></label>
+                        </th>
+                        <td>
+                            <select id="wpalw_rows" name="wpalw_rows">
+                                <?php
+                                $rows = $current_wall ? (isset($current_wall['rows']) ? $current_wall['rows'] : 3) : 3;
+                                for ($i = 1; $i <= 12; $i++) :
+                                ?>
+                                    <option value="<?php echo $i; ?>" <?php selected($rows, $i); ?>>
+                                        <?php echo $i; ?>
+                                    </option>
+                                <?php endfor; ?>
+                            </select>
+                            <p class="description"><?php _e('Number of rows in the image grid.', 'wp-animated-live-wall'); ?></p>
                         </td>
                     </tr>
                 </table>
@@ -98,10 +165,10 @@
 
         <div id="shortcode-tab" class="tab-pane">
             <h2><?php _e('Shortcode', 'wp-animated-live-wall'); ?></h2>
-            <p><?php _e('Use the following shortcode to display the animated live wall on any page or post:', 'wp-animated-live-wall'); ?></p>
+            <p><?php _e('Use the following shortcode to display this specific live wall on any page or post:', 'wp-animated-live-wall'); ?></p>
 
             <div class="wpalw-shortcode-box">
-                <code>[animated_live_wall]</code>
+                <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>"]</code>
                 <button type="button" class="button wpalw-copy-shortcode">
                     <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
                 </button>
@@ -118,16 +185,26 @@
                 </thead>
                 <tbody>
                     <tr>
+                        <td><code>id</code></td>
+                        <td>default</td>
+                        <td><?php _e('ID of the live wall to display.', 'wp-animated-live-wall'); ?></td>
+                    </tr>
+                    <tr>
                         <td><code>columns</code></td>
-                        <td><?php echo esc_html($options['columns']); ?></td>
+                        <td><?php echo esc_html($columns); ?></td>
                         <td><?php _e('Number of columns in the image grid.', 'wp-animated-live-wall'); ?></td>
+                    </tr>
+                    <tr>
+                        <td><code>rows</code></td>
+                        <td><?php echo esc_html($rows); ?></td>
+                        <td><?php _e('Number of rows in the image grid.', 'wp-animated-live-wall'); ?></td>
                     </tr>
                 </tbody>
             </table>
 
             <h4><?php _e('Example', 'wp-animated-live-wall'); ?></h4>
             <div class="wpalw-shortcode-box">
-                <code>[animated_live_wall columns="6"]</code>
+                <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" columns="6" rows="4"]</code>
                 <button type="button" class="button wpalw-copy-shortcode">
                     <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
                 </button>

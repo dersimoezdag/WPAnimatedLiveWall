@@ -1,5 +1,5 @@
-<div class="wpalw-container">
-    <div class="wpalw-grid" data-columns="<?php echo esc_attr($columns); ?>">
+<div class="wpalw-container" data-wall-id="<?php echo esc_attr($wall_id); ?>">
+    <div class="wpalw-grid" data-columns="<?php echo esc_attr($columns); ?>" data-rows="<?php echo esc_attr($rows); ?>">
         <?php
         foreach ($images as $image_id) :
             $image_full = wp_get_attachment_image_src($image_id, 'full');
@@ -12,8 +12,8 @@
                     <div class="wpalw-image-container">
                         <img
                             src="<?php echo esc_url($image_medium[0]); ?>"
-                            data-all-images="<?php echo esc_attr(json_encode(array($image_id))); ?>"
-                            data-current-index="0"
+                            data-wall-id="<?php echo esc_attr($wall_id); ?>"
+                            data-image-id="<?php echo esc_attr($image_id); ?>"
                             alt="<?php echo esc_attr($alt_text); ?>"
                             class="wpalw-image">
                     </div>
