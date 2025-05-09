@@ -12,7 +12,7 @@ if (!isset($selected_effects) || !is_array($selected_effects) || empty($selected
 // JSON für JavaScript vorbereiten
 $effects_json = json_encode($selected_effects);
 
-// Sammle alle Bildquellen für JavaScript
+// Sammle alle Bildquellen für JavaScript - stelle sicher, dass alle Bilder übergeben werden
 $all_image_urls = array();
 if (isset($images) && is_array($images)) {
     foreach ($images as $image_id) {
@@ -23,6 +23,9 @@ if (isset($images) && is_array($images)) {
     }
 }
 $all_image_urls_json = json_encode($all_image_urls);
+
+// Prüfe, ob genügend Bilder für die Wand vorhanden sind
+$has_enough_images = count($all_image_urls) >= ($rows * $columns);
 ?>
 
 <div id="wpalw-<?php echo $wall_id; ?>" class="wp-animated-live-wall"

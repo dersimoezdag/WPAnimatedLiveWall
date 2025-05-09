@@ -358,7 +358,14 @@
     if (allImageUrls && Array.isArray(allImageUrls) && allImageUrls.length > 0) {
       // Speichere alle Bildquellen in der Wand für die Rotation
       wall.data('all-images', allImageUrls);
-      console.log('Bildliste initialisiert mit ' + allImageUrls.length + ' Bildern aus data-attribute');
+
+      // Prüfe, ob genug Bilder für die Wand vorhanden sind
+      var totalCells = wallOptions.rows * wallOptions.columns;
+      var totalImages = allImageUrls.length;
+
+      // Speichere diese Information in den Wandoptionen
+      wallOptions.hasEnoughImages = totalImages >= totalCells;
+      console.log('Bildliste initialisiert mit ' + totalImages + ' Bildern für ' + totalCells + ' Zellen. Genug Bilder: ' + wallOptions.hasEnoughImages);
     } else {
       // Fallback: Sammle nur die aktuell sichtbaren Bilder
       var visibleImages = [];
@@ -369,7 +376,11 @@
         }
       });
       wall.data('all-images', visibleImages);
-      console.log('Fallback-Bildliste mit ' + visibleImages.length + ' sichtbaren Bildern');
+
+      // Prüfe, ob genug Bilder für die Wand vorhanden sind
+      var totalCells = wallOptions.rows * wallOptions.columns;
+      wallOptions.hasEnoughImages = visibleImages.length >= totalCells;
+      console.log('Fallback-Bildliste mit ' + visibleImages.length + ' sichtbaren Bildern für ' + totalCells + ' Zellen. Genug Bilder: ' + wallOptions.hasEnoughImages);
     }
 
     // Starte die erste Animation nach einer kurzen Verzögerung
@@ -430,22 +441,27 @@
       wall.data('all-images', allAvailableImages);
       console.log('Initialisierte Bildliste mit ' + allAvailableImages.length + ' Bildern für die Rotation');
     } // Debug-Ausgabe: Aktuell verfügbare Bilder und sichtbare Quellen vergleichen
-    console.log('All available images:', allAvailableImages.length, 'Visible sources:', allVisibleSources.length);
+    console.log('All available images:', allAvailableImages.length, 'Visible sources:', allVisibleSources.length); // Überprüfe, ob wir genügend Bilder haben (mehr als die Anzahl der Kacheln)
+    var hasEnoughImages = wallOptions.hasEnoughImages || false;
 
-    // Finde Bilder, die aktuell nicht angezeigt werden
-    var unusedImages = allAvailableImages.filter(function (src) {
-      return allVisibleSources.indexOf(src) === -1;
-    });
+    // Strategie anpassen basierend auf der Bildanzahl
+    var unusedImages = [];
+    var currentImg = tile.find('img').attr('src');
 
-    console.log('Unused images found:', unusedImages.length);
-
-    // Wenn keine ungenutzten Bilder verfügbar sind, verwende die verfügbaren Bilder
-    // außer dem aktuellen Bild der zu ändernden Kachel
-    if (unusedImages.length === 0) {
-      var currentImg = tile.find('img').attr('src');
+    if (hasEnoughImages) {
+      // Wenn wir genug Bilder haben: Zeige keine doppelten Bilder
       unusedImages = allAvailableImages.filter(function (src) {
+        // Wähle nur Bilder, die noch nicht sichtbar sind
+        return allVisibleSources.indexOf(src) === -1;
+      });
+      console.log('Genug Bilder vorhanden. Nur ungenutzte Bilder verwenden:', unusedImages.length);
+    } else {
+      // Wenn wir zu wenig Bilder haben: Erlaube Duplikate, aber vermeide das aktuelle Bild
+      unusedImages = allAvailableImages.filter(function (src) {
+        // Verwende alle Bilder außer dem aktuell angezeigten in dieser Kachel
         return src !== currentImg;
       });
+      console.log('Zu wenig Bilder. Nutze andere Bilder, auch wenn sie bereits sichtbar sind:', unusedImages.length);
     }
     if (unusedImages.length === 0) {
       // Wenn keine unused images verfügbar sind, setze das Animationsflag zurück und plane die nächste Animation

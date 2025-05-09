@@ -86,6 +86,32 @@ if (!$current_wall && !empty($walls)) {
                 <h2><?php _e('Manage Live Wall Images', 'wp-animated-live-wall'); ?></h2>
                 <p><?php _e('Add, remove, and reorder the images for your animated live wall.', 'wp-animated-live-wall'); ?></p>
 
+                <?php
+                // Prüfe, ob genügend Bilder vorhanden sind
+                $image_count = 0;
+                $required_images = 0;
+
+                if ($current_wall && isset($current_wall['images']) && is_array($current_wall['images'])) {
+                    $image_count = count($current_wall['images']);
+                    $rows = isset($current_wall['rows']) ? intval($current_wall['rows']) : 3;
+                    $columns = isset($current_wall['columns']) ? intval($current_wall['columns']) : 4;
+                    $required_images = $rows * $columns;
+
+                    if ($image_count > 0 && $image_count < $required_images) : ?>
+                        <div class="notice notice-warning inline">
+                            <p>
+                                <strong><?php _e('Hinweis:', 'wp-animated-live-wall'); ?></strong>
+                                <?php printf(
+                                    __('Sie haben %1$d Bilder ausgewählt, benötigen aber mindestens %2$d (Zeilen × Spalten), um alle Kacheln ohne Wiederholungen zu füllen. Bei zu wenigen Bildern können einige Bilder gleichzeitig mehrfach erscheinen.', 'wp-animated-live-wall'),
+                                    $image_count,
+                                    $required_images
+                                ); ?>
+                            </p>
+                        </div>
+                <?php endif;
+                }
+                ?>
+
                 <form method="post" action="options.php" id="wpalw-images-form">
                     <?php settings_fields('wpalw_settings'); ?>
                     <input type="hidden" id="wpalw-current-wall-id" name="wpalw_current_wall_id" value="<?php echo esc_attr($current_wall_id); ?>">
