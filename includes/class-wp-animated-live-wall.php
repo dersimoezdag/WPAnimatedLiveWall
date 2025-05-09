@@ -517,13 +517,23 @@ class WP_Animated_Live_Wall
 
         $image_ids = array_map('trim', explode(',', $attributes['images']));
 
+        // Calculate total cells available in the grid
+        $total_cells = (int)$attributes['rows'] * (int)$attributes['columns'];
+
+        // Limit visible images to the number of cells
+        $visible_image_ids = array_slice($image_ids, 0, $total_cells);
+
+        // Get hidden image IDs
+        $hidden_image_ids = array_slice($image_ids, $total_cells);
+
         // Build grid with CSS classes for responsive square tiles
         $output = '<div class="wp-animated-live-wall" ';
         $output .= 'data-rows="' . esc_attr($attributes['rows']) . '" ';
         $output .= 'data-columns="' . esc_attr($attributes['columns']) . '" ';
         $output .= 'style="grid-template-columns: repeat(' . esc_attr($attributes['columns']) . ', 1fr);">';
 
-        foreach ($image_ids as $image_id) {
+        // Add visible images to the grid
+        foreach ($visible_image_ids as $index => $image_id) {
             // Get responsive square image data
             $image_data = $this->get_square_image($image_id);
             if ($image_data) {
@@ -531,9 +541,27 @@ class WP_Animated_Live_Wall
                 $output .= '<img src="' . esc_url($image_data['src']) . '" ';
                 $output .= 'srcset="' . esc_attr($image_data['srcset']) . '" ';
                 $output .= 'sizes="' . esc_attr($image_data['sizes']) . '" ';
+                $output .= 'data-id="' . esc_attr($image_id) . '" ';
                 $output .= 'alt="">';
                 $output .= '</div>';
             }
+        }
+
+        // Add hidden container with image data for JavaScript to use
+        if (!empty($hidden_image_ids)) {
+            $output .= '<div class="wpalw-hidden-images" style="display:none;">';
+            foreach ($hidden_image_ids as $image_id) {
+                $image_data = $this->get_square_image($image_id);
+                if ($image_data) {
+                    $output .= '<div data-id="' . esc_attr($image_id) . '">';
+                    $output .= '<img src="' . esc_url($image_data['src']) . '" ';
+                    $output .= 'srcset="' . esc_attr($image_data['srcset']) . '" ';
+                    $output .= 'sizes="' . esc_attr($image_data['sizes']) . '" ';
+                    $output .= 'alt="">';
+                    $output .= '</div>';
+                }
+            }
+            $output .= '</div>';
         }
 
         $output .= '</div>';

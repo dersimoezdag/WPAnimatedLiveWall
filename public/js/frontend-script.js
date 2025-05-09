@@ -1,123 +1,74 @@
-(function ($) {
-  'use strict';
+jQuery(document).ready(function ($) {
+  // Initialisiere jede Animated Live Wall auf der Seite
+  $('.wp-animated-live-wall').each(function () {
+    const wall = $(this);
+    const rows = parseInt(wall.data('rows')) || 3;
+    const columns = parseInt(wall.data('columns')) || 4;
 
-  $(document).ready(function () {
-    // Initialize all live walls on the page
-    $('.wpalw-container').each(function () {
-      initLiveWall($(this));
+    // Setze CSS-Variablen für das Grid-Layout
+    wall.css({
+      'grid-template-columns': `repeat(${columns}, 1fr)`,
+      'grid-template-rows': `repeat(${rows}, 1fr)`
     });
 
-    /**
-     * Initialize a specific live wall
-     */
-    function initLiveWall($container) {
-      // Get all images in this wall
-      var $images = $container.find('.wpalw-image');
+    // Suche alle sichtbaren Kacheln
+    const visibleTiles = wall.find('.wall-tile');
 
-      if ($images.length === 0) {
-        return;
-      }
+    // Suche versteckte Bilder im versteckten Container
+    const hiddenImages = wall.find('.wpalw-hidden-images > div');
 
-      var wallId = $container.data('wall-id');
-
-      // Collect all image URLs from this wall
-      var allImageUrls = collectAllImageUrls($images);
-
-      if (allImageUrls.length <= 1) {
-        return; // Need at least 2 images to switch
-      }
-
-      // Start animations after a short delay to ensure all images are loaded
-      setTimeout(function () {
-        startSingleTileChanges($container, $images, allImageUrls);
-      }, 1000);
+    // Wenn keine versteckten Bilder vorhanden sind, keine Rotation notwendig
+    if (hiddenImages.length === 0) {
+      return;
     }
 
-    /**
-     * Collect all image URLs from a set of images
-     */
-    function collectAllImageUrls($images) {
-      var urls = [];
-      $images.each(function () {
-        var src = $(this).attr('src');
-        if (src) {
-          urls.push(src);
-        }
+    // Starte Bildrotation alle 5 Sekunden (oder benutzerdefinierter Zeitraum)
+    const animationSpeed = wall.data('animation-speed') || 5000;
+
+    setInterval(function () {
+      // Wähle eine zufällige sichtbare Kachel
+      const randomTileIndex = Math.floor(Math.random() * visibleTiles.length);
+      const randomTile = $(visibleTiles[randomTileIndex]);
+      const visibleImg = randomTile.find('img');
+
+      // Wähle ein zufälliges verstecktes Bild
+      const randomHiddenIndex = Math.floor(Math.random() * hiddenImages.length);
+      const randomHiddenDiv = $(hiddenImages[randomHiddenIndex]);
+      const randomHiddenImg = randomHiddenDiv.find('img');
+
+      // Hole Attribute vom versteckten Bild
+      const hiddenSrc = randomHiddenImg.attr('src');
+      const hiddenSrcset = randomHiddenImg.attr('srcset');
+      const hiddenSizes = randomHiddenImg.attr('sizes');
+      const hiddenId = randomHiddenDiv.data('id');
+
+      // Hole Attribute vom sichtbaren Bild
+      const visibleSrc = visibleImg.attr('src');
+      const visibleSrcset = visibleImg.attr('srcset');
+      const visibleSizes = visibleImg.attr('sizes');
+      const visibleId = visibleImg.data('id');
+
+      // Animiere den Bildwechsel
+      visibleImg.fadeOut(400, function () {
+        // Tausche die Attribute
+        visibleImg.attr({
+          src: hiddenSrc,
+          srcset: hiddenSrcset,
+          sizes: hiddenSizes,
+          'data-id': hiddenId
+        });
+
+        // Aktualisiere verstecktes Bild mit den vorherigen sichtbaren Bildattributen
+        randomHiddenImg.attr({
+          src: visibleSrc,
+          srcset: visibleSrcset,
+          sizes: visibleSizes
+        });
+        randomHiddenDiv.attr('data-id', visibleId);
+
+        // Blende das neue Bild ein
+        visibleImg.fadeIn(400);
       });
-      return urls;
-    }
-
-    /**
-     * Start changing one random tile at a time
-     */
-    function startSingleTileChanges($container, $images, allImageUrls) {
-      var animationSpeed = parseInt(wpalw_data.animation_speed) || 5000;
-
-      // Keep track of currently displayed images
-      var currentImageMap = {};
-
-      // Initialize the image map with current images
-      $images.each(function () {
-        var src = $(this).attr('src');
-        currentImageMap[src] = true;
-      });
-
-      // Function to change a random tile
-      function changeRandomTile() {
-        // Select a random tile
-        var randomIndex = Math.floor(Math.random() * $images.length);
-        var $randomImage = $($images[randomIndex]);
-
-        // Switch this image (ensuring no duplicates when possible)
-        switchImage($randomImage, allImageUrls, currentImageMap);
-
-        // Schedule the next change after the animation speed delay
-        setTimeout(changeRandomTile, animationSpeed);
-      }
-
-      // Start the process
-      changeRandomTile();
-    }
-
-    /**
-     * Switch an image to a random one, avoiding duplicates if possible
-     */
-    function switchImage($image, allImageUrls, currentImageMap) {
-      var currentSrc = $image.attr('src');
-
-      // Remove the current image from the map before selecting a new one
-      delete currentImageMap[currentSrc];
-
-      // Find images that aren't currently displayed anywhere
-      var availableImages = [];
-      for (var i = 0; i < allImageUrls.length; i++) {
-        if (!currentImageMap[allImageUrls[i]]) {
-          availableImages.push(allImageUrls[i]);
-        }
-      }
-
-      var newSrc;
-
-      // If we have available images that aren't displayed elsewhere, use one
-      if (availableImages.length > 0) {
-        var randomAvailableIndex = Math.floor(Math.random() * availableImages.length);
-        newSrc = availableImages[randomAvailableIndex];
-      } else {
-        // Otherwise just pick any image that's different from the current one
-        do {
-          var randomIndex = Math.floor(Math.random() * allImageUrls.length);
-          newSrc = allImageUrls[randomIndex];
-        } while (newSrc === currentSrc && allImageUrls.length > 1);
-      }
-
-      // Add the new image to the current image map
-      currentImageMap[newSrc] = true;
-
-      // Perform the animation
-      $image.fadeOut(400, function () {
-        $image.attr('src', newSrc);
-        $image.fadeIn(400);
-      });
-    }
+    }, animationSpeed);
   });
-})(jQuery);
+});

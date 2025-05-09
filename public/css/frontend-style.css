@@ -64,52 +64,7 @@
     grid-template-columns: repeat(12, 1fr);
 }
 
-/* Mobile responsive adjustments */
-@media (max-width: 1024px) {
 
-    .wpalw-grid[data-columns="5"],
-    .wpalw-grid[data-columns="6"],
-    .wpalw-grid[data-columns="7"],
-    .wpalw-grid[data-columns="8"],
-    .wpalw-grid[data-columns="9"],
-    .wpalw-grid[data-columns="10"],
-    .wpalw-grid[data-columns="11"],
-    .wpalw-grid[data-columns="12"] {
-        grid-template-columns: repeat(4, 1fr);
-    }
-}
-
-@media (max-width: 768px) {
-
-    .wpalw-grid[data-columns="4"],
-    .wpalw-grid[data-columns="5"],
-    .wpalw-grid[data-columns="6"],
-    .wpalw-grid[data-columns="7"],
-    .wpalw-grid[data-columns="8"],
-    .wpalw-grid[data-columns="9"],
-    .wpalw-grid[data-columns="10"],
-    .wpalw-grid[data-columns="11"],
-    .wpalw-grid[data-columns="12"] {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-@media (max-width: 480px) {
-
-    .wpalw-grid[data-columns="2"],
-    .wpalw-grid[data-columns="3"],
-    .wpalw-grid[data-columns="4"],
-    .wpalw-grid[data-columns="5"],
-    .wpalw-grid[data-columns="6"],
-    .wpalw-grid[data-columns="7"],
-    .wpalw-grid[data-columns="8"],
-    .wpalw-grid[data-columns="9"],
-    .wpalw-grid[data-columns="10"],
-    .wpalw-grid[data-columns="11"],
-    .wpalw-grid[data-columns="12"] {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
 
 /* Image styling */
 .wpalw-grid-item {
@@ -142,15 +97,17 @@
     grid-gap: 4px;
     width: 100%;
     max-width: 100%;
+    /* Grid wird dynamisch per JavaScript bzw. durch Inline-Style gesetzt */
 }
 
 .wall-tile {
     position: relative;
     aspect-ratio: 1/1;
-    /* Modern approach for square tiles */
+    /* Moderne Browser */
+    overflow: hidden;
 }
 
-/* Fallback for browsers that don't support aspect-ratio */
+/* Fallback für Browser ohne Unterstützung von aspect-ratio */
 .wall-tile::before {
     content: '';
     float: left;
@@ -170,5 +127,14 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* Bildproportionen erhalten */
     transition: opacity 0.3s ease-in-out;
+}
+
+/* Versteckte Bildcontainer für die Rotation */
+.wpalw-hidden-images {
+    display: none;
+    visibility: hidden;
+    position: absolute;
+    left: -9999px;
 }
