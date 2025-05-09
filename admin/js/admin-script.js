@@ -2,6 +2,34 @@
   'use strict';
 
   $(document).ready(function () {
+    // Formularwerte in JSON-Objekt umwandeln
+    function formToJSON(formSelector) {
+      var formData = {};
+
+      // Grundlegende Felder
+      $(formSelector)
+        .find('input[type="text"], input[type="number"], select')
+        .each(function () {
+          var name = $(this).attr('name');
+          if (name && name.startsWith('wpalw_')) {
+            var key = name.replace('wpalw_', '');
+            formData[key] = $(this).val();
+          }
+        });
+
+      // Checkboxen für Effekte (multiselect)
+      var selectedEffects = [];
+      $(formSelector)
+        .find('input[name="wpalw_selected_effects[]"]:checked')
+        .each(function () {
+          selectedEffects.push($(this).val());
+        });
+      console.log('Selected effects:', selectedEffects); // Debug
+      formData['selected_effects'] = selectedEffects;
+
+      return formData;
+    }
+
     // Tab navigation
     $('.nav-tab').on('click', function (e) {
       e.preventDefault();
@@ -199,61 +227,43 @@
       update: function () {
         updateImageOrder();
       }
-    });
-
-    // Save wall settings
-    $('#wpalw-settings-form').on('submit', function (e) {
+    }); // Einstellungen speichern
+    $('#wpalw-settings-form').submit(function (e) {
       e.preventDefault();
 
-      var wallId = $('input[name="wpalw_wall_id"]').val();
-      var animationSpeed = $('#wpalw_animation_speed').val();
-      var transition = $('#wpalw_transition').val();
-      var gap = $('#wpalw_gap').val();
-      var columns = $('#wpalw_columns').val();
-      var rows = $('#wpalw_rows').val();
+      // Wichtig: Stelle sicher, dass die Wall-ID korrekt ausgelesen wird
+      var wallId = $('#wpalw-wall-id').val() || $('input[name="wpalw_wall_id"]').val();
 
-      // Validiere animation speed (mindestens 1000)
-      if (animationSpeed < 1000) {
-        animationSpeed = 1000;
-        $('#wpalw_animation_speed').val(1000);
+      // Wenn keine Wall-ID vorhanden ist, abbrechen
+      if (!wallId) {
+        console.error('Keine Wall-ID gefunden!');
+        alert('Fehler: Wall-ID konnte nicht ermittelt werden. Bitte laden Sie die Seite neu.');
+        return;
       }
 
-      // Validiere transition (zwischen 100 und 2000ms)
-      if (transition < 100) {
-        transition = 100;
-        $('#wpalw_transition').val(100);
-      } else if (transition > 2000) {
-        transition = 2000;
-        $('#wpalw_transition').val(2000);
-      }
+      // Sammle Formulardaten
+      var formData = formToJSON('#wpalw-settings-form');
+      formData.id = wallId;
 
-      // Validiere gap (zwischen 0 und 20px)
-      if (gap < 0) {
-        gap = 0;
-        $('#wpalw_gap').val(0);
-      } else if (gap > 20) {
-        gap = 20;
-        $('#wpalw_gap').val(20);
-      }
+      // Debug-Ausgaben
+      console.log('Speichere Einstellungen für Wall ID:', wallId);
+      console.log('Komplette Formulardaten:', formData);
+      console.log('Ausgewählte Effekte:', formData.selected_effects);
 
+      // AJAX-Request senden
       $.ajax({
         url: wpalw_data.ajax_url,
         type: 'POST',
+        dataType: 'json',
         data: {
           action: 'wpalw_save_wall',
           nonce: wpalw_data.nonce,
-          wall_data: {
-            id: wallId,
-            animation_speed: animationSpeed,
-            transition: transition,
-            gap: gap,
-            columns: columns,
-            rows: rows,
-            name: $('#wpalw-wall-name').val() // Füge Namen hinzu, um sicherzustellen, dass er erhalten bleibt
-          }
+          wall_data: formData
         },
         success: function (response) {
+          console.log('AJAX response:', response);
           if (response.success) {
+            // alert('Wand-Einstellungen erfolgreich gespeichert!');
             // Show success message
             var button = $('#wpalw-settings-form .button-primary');
             var originalText = button.val();
@@ -261,7 +271,14 @@
             setTimeout(function () {
               button.val(originalText);
             }, 1500);
+          } else {
+            alert('Fehler beim Speichern der Einstellungen: ' + (response.data || 'Unbekannter Fehler'));
           }
+        },
+        error: function (xhr, status, error) {
+          console.error('AJAX Fehler:', status, error);
+          console.error('Server Antwort:', xhr.responseText);
+          alert('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.');
         }
       });
     });

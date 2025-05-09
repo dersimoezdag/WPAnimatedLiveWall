@@ -136,10 +136,16 @@ if (!$current_wall && !empty($walls)) {
                     $animation_speed = $current_wall ? $current_wall['animation_speed'] : 5000;
                     $columns = $current_wall ? $current_wall['columns'] : 4;
                     $gap = isset($current_wall['gap']) ? $current_wall['gap'] : 4;
-                    $transition = isset($current_wall['transition']) ? $current_wall['transition'] : 400;
-                    ?>
+                    $transition = isset($current_wall['transition']) ? $current_wall['transition'] : 400;                    // Prepare selected effects for the form
+                    $current_wall_selected_effects = array();
+                    if ($current_wall && isset($current_wall['selected_effects']) && is_array($current_wall['selected_effects'])) {
+                        $current_wall_selected_effects = $current_wall['selected_effects'];
+                    } elseif (!empty($available_effects)) {
+                        // Wenn keine ausgewählten Effekte definiert sind, standardmäßig alle verfügbaren auswählen
+                        $current_wall_selected_effects = array_keys($available_effects);
+                    } ?>
 
-                    <input type="hidden" name="wpalw_wall_id" value="<?php echo esc_attr($current_wall_id); ?>">
+                    <input type="hidden" name="wpalw_wall_id" id="wpalw-wall-id" value="<?php echo esc_attr($current_wall_id); ?>">
                     <table class="form-table">
                         <tr>
                             <th scope="row">
@@ -201,9 +207,28 @@ if (!$current_wall && !empty($walls)) {
                                 <p class="description"><?php _e('Number of rows in the image grid.', 'wp-animated-live-wall'); ?></p>
                             </td>
                         </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Transition Effects', 'wp-animated-live-wall'); ?></th>
+                            <td>
+                                <?php if (!empty($available_effects)) : ?>
+                                    <fieldset>
+                                        <legend class="screen-reader-text"><span><?php _e('Transition Effects', 'wp-animated-live-wall'); ?></span></legend>
+                                        <?php foreach ($available_effects as $effect_key => $effect_name) : ?>
+                                            <label style="margin-right: 15px;">
+                                                <input type="checkbox" name="wpalw_selected_effects[]" value="<?php echo esc_attr($effect_key); ?>" <?php checked(in_array($effect_key, $current_wall_selected_effects)); ?>>
+                                                <?php echo esc_html($effect_name); ?>
+                                            </label>
+                                        <?php endforeach; ?>
+                                    </fieldset>
+                                    <p class="description"><?php _e('Select the transition effects to be used for this wall. If none are selected, it will default to Crossfade.', 'wp-animated-live-wall'); ?></p>
+                                <?php else : ?>
+                                    <p><?php _e('No transition effects available.', 'wp-animated-live-wall'); ?></p>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
                     </table>
 
-                    <?php submit_button(__('Save Settings', 'wp-animated-live-wall')); ?>
+                    <?php submit_button(__('Save Settings', 'wp-animated-live-wall'), 'primary', 'submit-wall-settings'); ?>
                 </form>
             </div>
 

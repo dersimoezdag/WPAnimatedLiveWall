@@ -30,6 +30,7 @@ class WP_Animated_Live_Wall
         add_action('wp_ajax_wpalw_remove_image', array($this, 'ajax_remove_image'));
         add_action('wp_ajax_wpalw_update_image_order', array($this, 'ajax_update_image_order'));
     }
+
     /**
      * Plugin activation.
      */
@@ -37,13 +38,15 @@ class WP_Animated_Live_Wall
     {
         // Default settings
         if (!get_option('wpalw_walls')) {
+            $all_effect_keys = array_keys($this->get_available_transition_effects());
             $default_wall = array(
                 'id' => 'default',
                 'name' => __('Default Wall', 'wp-animated-live-wall'),
                 'images' => array(),
                 'animation_speed' => 5000,
                 'columns' => 4,
-                'rows' => 3
+                'rows' => 3,
+                'selected_effects' => !empty($all_effect_keys) ? $all_effect_keys : ['crossfade'] // Ensure all effects are selected for the default wall
             );
 
             update_option('wpalw_walls', array($default_wall));
@@ -92,6 +95,26 @@ class WP_Animated_Live_Wall
     }
 
     /**
+     * Get available transition effects.
+     *
+     * @return array Available transition effects with key and name.
+     */
+    public function get_available_transition_effects()
+    {
+        return array(
+            'crossfade' => __('Improved Crossfade', 'wp-animated-live-wall'),
+            'zoomfade' => __('Zoom Fade', 'wp-animated-live-wall'),
+            'slideup' => __('Slide Up', 'wp-animated-live-wall'),
+            'slidedown' => __('Slide Down', 'wp-animated-live-wall'),
+            'slideleft' => __('Slide Left', 'wp-animated-live-wall'),
+            'slideright' => __('Slide Right', 'wp-animated-live-wall'),
+            'rotate' => __('Rotate', 'wp-animated-live-wall'),
+            'blurfade' => __('Blur Fade', 'wp-animated-live-wall'),
+            'flip' => __('3D Flip', 'wp-animated-live-wall'),
+        );
+    }
+
+    /**
      * Sanitize walls settings.
      */
     public function sanitize_walls_setting($input)
@@ -101,6 +124,7 @@ class WP_Animated_Live_Wall
         }
 
         $sanitized = array();
+        $available_effects = array_keys($this->get_available_transition_effects());
 
         foreach ($input as $wall) {
             if (!isset($wall['id']) || !isset($wall['name'])) {
@@ -109,13 +133,26 @@ class WP_Animated_Live_Wall
             $sanitized_wall = array(
                 'id' => sanitize_key($wall['id']),
                 'name' => sanitize_text_field($wall['name']),
-                'images' => isset($wall['images']) && is_array($wall['images']) ? $wall['images'] : array(),
+                'images' => isset($wall['images']) && is_array($wall['images']) ? array_map('absint', $wall['images']) : array(),
                 'animation_speed' => isset($wall['animation_speed']) ? absint($wall['animation_speed']) : 5000,
                 'transition' => isset($wall['transition']) ? absint($wall['transition']) : 400,
                 'gap' => isset($wall['gap']) ? absint($wall['gap']) : 4,
                 'columns' => isset($wall['columns']) ? absint($wall['columns']) : 4,
-                'rows' => isset($wall['rows']) ? absint($wall['rows']) : 3
+                'rows' => isset($wall['rows']) ? absint($wall['rows']) : 3,
+                'selected_effects' => array()
             );
+
+            if (isset($wall['selected_effects']) && is_array($wall['selected_effects'])) {
+                foreach ($wall['selected_effects'] as $effect_key) {
+                    if (in_array(sanitize_key($effect_key), $available_effects, true)) {
+                        $sanitized_wall['selected_effects'][] = sanitize_key($effect_key);
+                    }
+                }
+            }
+            // If no effects are selected, or array is empty, add default 'crossfade'
+            if (empty($sanitized_wall['selected_effects'])) {
+                $sanitized_wall['selected_effects'] = ['crossfade'];
+            }
 
             // Ensure animation speed is at least 1000ms
             if ($sanitized_wall['animation_speed'] < 1000) {
@@ -127,13 +164,23 @@ class WP_Animated_Live_Wall
                 $sanitized_wall['transition'] = 100;
             } elseif ($sanitized_wall['transition'] > 2000) {
                 $sanitized_wall['transition'] = 2000;
-            }
-
-            // Ensure gap is between 0px and 20px
-            if ($sanitized_wall['gap'] < 0) {
-                $sanitized_wall['gap'] = 0;
-            } elseif ($sanitized_wall['gap'] > 20) {
-                $sanitized_wall['gap'] = 20;
+            }            // Ensure gap is between 0px and 20px
+            if (!isset($wall['gap']) && $wall['gap'] !== 0 && $wall['gap'] !== '0') {
+                $sanitized_wall['gap'] = 4;
+            } else {
+                // Special handling for "0" or 0
+                if ($wall['gap'] === 0 || $wall['gap'] === '0') {
+                    $sanitized_wall['gap'] = 0;
+                } else {
+                    $gap_val = intval($wall['gap']);
+                    if ($gap_val < 0) {
+                        $sanitized_wall['gap'] = 0;
+                    } elseif ($gap_val > 20) {
+                        $sanitized_wall['gap'] = 20;
+                    } else {
+                        $sanitized_wall['gap'] = $gap_val;
+                    }
+                }
             }
 
             // Ensure columns is between 1 and 12
@@ -254,8 +301,10 @@ class WP_Animated_Live_Wall
      */
     public function admin_page()
     {
+        $available_effects = $this->get_available_transition_effects(); // Pass available effects to the admin page scope
         require_once WPALW_PLUGIN_DIR . 'admin/partials/admin-page.php';
     }
+
     /**
      * Live wall shortcode callback.
      */
@@ -271,49 +320,75 @@ class WP_Animated_Live_Wall
 
         // Get all walls
         $walls = get_option('wpalw_walls', array());
+        $global_settings = get_option('wpalw_global_options', array());
 
         // Find the requested wall
-        $wall = null;
+        $current_wall_settings = null;
         foreach ($walls as $w) {
             if ($w['id'] === $wall_id) {
-                $wall = $w;
+                $current_wall_settings = $w;
                 break;
             }
         }
 
-        // If wall not found, try to use default
-        if (!$wall) {
+        // If wall not found, try to use default wall if it exists
+        if (!$current_wall_settings) {
             foreach ($walls as $w) {
                 if ($w['id'] === 'default') {
-                    $wall = $w;
+                    $current_wall_settings = $w;
                     break;
                 }
             }
-
-            // If still not found, return error
-            if (!$wall) {
-                return '<p>' . __('Live wall not found.', 'wp-animated-live-wall') . '</p>';
-            }
         }
 
-        // Check if wall has images
-        if (empty($wall['images'])) {
-            return '<p>' . __('No images found for the live wall.', 'wp-animated-live-wall') . '</p>';
+        // If still not found, or no images, return error or nothing
+        if (!$current_wall_settings) {
+            return '<p>' . __('Live wall not found.', 'wp-animated-live-wall') . '</p>';
+        }
+        if (empty($current_wall_settings['images'])) {
+            return '<p>' . __('No images found for this live wall.', 'wp-animated-live-wall') . '</p>';
         }
 
-        // Override columns if specified in shortcode
-        $columns = !empty($atts['columns']) ? absint($atts['columns']) : $wall['columns'];
+        // Prepare data for the frontend display
+        // Priority: Shortcode atts > Wall settings > Global settings > Hardcoded defaults
 
-        // Override rows if specified in shortcode
-        $rows = !empty($atts['rows']) ? absint($atts['rows']) : (isset($wall['rows']) ? $wall['rows'] : 3);        // Set data for JavaScript
-        wp_localize_script('wpalw-frontend-script', 'wpalw_data', array(
-            'animation_speed' => $wall['animation_speed'],
-        ));
+        $default_columns = isset($global_settings['default_columns']) ? absint($global_settings['default_columns']) : 4;
+        $default_rows = isset($global_settings['default_rows']) ? absint($global_settings['default_rows']) : 3;
+        $default_animation_speed = isset($global_settings['default_animation_speed']) ? absint($global_settings['default_animation_speed']) : 5000;
+        $default_transition = isset($global_settings['default_transition']) ? absint($global_settings['default_transition']) : 400;
+        $default_gap = isset($global_settings['default_gap']) ? absint($global_settings['default_gap']) : 4;
 
-        // Get images for display
-        $images = $wall['images'];
+        // Resolve settings
+        $columns = !empty($atts['columns']) ? absint($atts['columns']) : (isset($current_wall_settings['columns']) ? absint($current_wall_settings['columns']) : $default_columns);
+        $rows = !empty($atts['rows']) ? absint($atts['rows']) : (isset($current_wall_settings['rows']) ? absint($current_wall_settings['rows']) : $default_rows);
+
+        $animation_speed = isset($current_wall_settings['animation_speed']) ? absint($current_wall_settings['animation_speed']) : $default_animation_speed;
+        $transition = isset($current_wall_settings['transition']) ? absint($current_wall_settings['transition']) : $default_transition;
+
+        if (isset($current_wall_settings['gap']) && $current_wall_settings['gap'] !== '') {
+            $gap = absint($current_wall_settings['gap']);
+        } else {
+            $gap = $default_gap;
+        }
+        if ($gap < 0) $gap = 0;
+        if ($gap > 20) $gap = 20;
+
+        $images = $current_wall_settings['images'];
+        $selected_effects = isset($current_wall_settings['selected_effects']) && !empty($current_wall_settings['selected_effects']) ? $current_wall_settings['selected_effects'] : ['crossfade'];
+
+        $wall_data_for_template = array(
+            'wall_id' => $wall_id,
+            'columns' => $columns,
+            'rows' => $rows,
+            'animation_speed' => $animation_speed,
+            'transition' => $transition,
+            'gap' => $gap,
+            'images' => $images,
+            'selected_effects' => $selected_effects // Übergebe das Array direkt, nicht als JSON
+        );
 
         ob_start();
+        extract($wall_data_for_template);
         include WPALW_PLUGIN_DIR . 'public/partials/frontend-display.php';
         return ob_get_clean();
     }
@@ -326,80 +401,168 @@ class WP_Animated_Live_Wall
         check_ajax_referer('wpalw-admin-nonce', 'nonce');
 
         if (!current_user_can('manage_options')) {
-            wp_send_json_error('Permission denied');
+            wp_send_json_error(__('Permission denied', 'wp-animated-live-wall'));
+        }        // Debug-Ausgabe des kompletten POST-Arrays
+        error_log('Received POST data: ' . print_r($_POST, true));
+
+        $wall_data_from_post = isset($_POST['wall_data']) ? $_POST['wall_data'] : null;
+        error_log('Extracted wall_data: ' . print_r($wall_data_from_post, true));
+
+        if (!$wall_data_from_post || !is_array($wall_data_from_post)) {
+            wp_send_json_error(__('Invalid wall data', 'wp-animated-live-wall'));
+            return;
         }
 
-        $wall_data = isset($_POST['wall_data']) ? $_POST['wall_data'] : null;
-
-        if (!$wall_data || !isset($wall_data['name'])) {
-            wp_send_json_error('Invalid wall data');
+        // Beim Speichern von Einstellungen muss der Name nicht unbedingt vorhanden sein
+        $is_settings_update = isset($wall_data_from_post['id']) && !empty($wall_data_from_post['id']);
+        if (!$is_settings_update && !isset($wall_data_from_post['name'])) {
+            wp_send_json_error(__('Wall name is required for new walls', 'wp-animated-live-wall'));
+            return;
         }
 
         $walls = get_option('wpalw_walls', array());
+        $available_effects_map = $this->get_available_transition_effects();
+        $available_effects_keys = array_keys($available_effects_map);
 
-        // Generate ID if new wall
-        if (empty($wall_data['id'])) {
-            $wall_data['id'] = 'wall_' . time() . '_' . mt_rand(100, 999);
-            $wall_data['images'] = array();
-            $wall_data['animation_speed'] = isset($wall_data['animation_speed']) ? absint($wall_data['animation_speed']) : 5000;
-            $wall_data['transition'] = isset($wall_data['transition']) ? absint($wall_data['transition']) : 400;
-            $wall_data['gap'] = isset($wall_data['gap']) ? absint($wall_data['gap']) : 4;
-            $wall_data['columns'] = isset($wall_data['columns']) ? absint($wall_data['columns']) : 4;
-            $wall_data['rows'] = isset($wall_data['rows']) ? absint($wall_data['rows']) : 3;
-            $walls[] = $wall_data;
-        } else {
-            // Update existing wall
+        $wall_id_to_save = isset($wall_data_from_post['id']) ? sanitize_key($wall_data_from_post['id']) : null;
+        $is_new_wall = empty($wall_id_to_save);
+
+        $current_wall_data_for_processing = array();
+
+        if ($is_new_wall) { // New wall
+            $current_wall_data_for_processing = array(
+                'id' => 'wall_' . time() . '_' . mt_rand(100, 999),
+                'name' => __('New Wall', 'wp-animated-live-wall'), // Default name, will be overridden
+                'images' => array(),
+                'animation_speed' => 5000,
+                'transition' => 400,
+                'gap' => 4,
+                'columns' => 4,
+                'rows' => 3,
+                'selected_effects' => $available_effects_keys // Default to all available for new wall
+            );
+        } else { // Existing wall
+            $wall_found_for_update = false;
             foreach ($walls as $key => $wall) {
-                if ($wall['id'] === $wall_data['id']) {
-                    // Update name and other properties
-                    $walls[$key]['name'] = sanitize_text_field($wall_data['name']);
-
-                    if (isset($wall_data['animation_speed'])) {
-                        $walls[$key]['animation_speed'] = absint($wall_data['animation_speed']);
-                        // Ensure minimum speed
-                        if ($walls[$key]['animation_speed'] < 1000) {
-                            $walls[$key]['animation_speed'] = 1000;
-                        }
+                if ($wall['id'] === $wall_id_to_save) {
+                    $current_wall_data_for_processing = $wall; // Start with existing data
+                    if (!isset($current_wall_data_for_processing['selected_effects'])) { // For backward compatibility
+                        $current_wall_data_for_processing['selected_effects'] = $available_effects_keys;
                     }
-
-                    if (isset($wall_data['transition'])) {
-                        $walls[$key]['transition'] = absint($wall_data['transition']);
-                        // Ensure transition is within valid range
-                        if ($walls[$key]['transition'] < 100) {
-                            $walls[$key]['transition'] = 100;
-                        } else if ($walls[$key]['transition'] > 2000) {
-                            $walls[$key]['transition'] = 2000;
-                        }
-                    }
-
-                    if (isset($wall_data['gap'])) {
-                        $walls[$key]['gap'] = absint($wall_data['gap']);
-                        // Ensure gap is within valid range
-                        if ($walls[$key]['gap'] < 0) {
-                            $walls[$key]['gap'] = 0;
-                        } else if ($walls[$key]['gap'] > 20) {
-                            $walls[$key]['gap'] = 20;
-                        }
-                    }
-
-                    if (isset($wall_data['columns'])) {
-                        $walls[$key]['columns'] = absint($wall_data['columns']);
-                    }
-
-                    if (isset($wall_data['rows'])) {
-                        $walls[$key]['rows'] = absint($wall_data['rows']);
-                    }
-
+                    $wall_found_for_update = true;
                     break;
                 }
             }
+            if (!$wall_found_for_update) {
+                wp_send_json_error(__('Wall not found for update.', 'wp-animated-live-wall'));
+                return;
+            }
+        }
+
+        // Update fields from POST data
+        if (isset($wall_data_from_post['name'])) {
+            $current_wall_data_for_processing['name'] = sanitize_text_field($wall_data_from_post['name']);
+        }
+        if (isset($wall_data_from_post['animation_speed'])) {
+            $current_wall_data_for_processing['animation_speed'] = absint($wall_data_from_post['animation_speed']);
+        }
+        if (isset($wall_data_from_post['transition'])) {
+            $current_wall_data_for_processing['transition'] = absint($wall_data_from_post['transition']);
+        }
+        if (array_key_exists('gap', $wall_data_from_post)) {
+            $posted_gap = $wall_data_from_post['gap'];
+
+            // Special handling for string "0" to ensure it's treated as integer 0
+            if ($posted_gap === "0" || $posted_gap === 0) {
+                $current_wall_data_for_processing['gap'] = 0;
+            } elseif ($posted_gap === null || $posted_gap === '') {
+                $current_wall_data_for_processing['gap'] = 4; // Default if null or empty string
+            } elseif (is_numeric($posted_gap)) {
+                $gap_val = intval($posted_gap);
+                if ($gap_val <= 0) {
+                    $current_wall_data_for_processing['gap'] = 0;
+                } elseif ($gap_val > 20) {
+                    $current_wall_data_for_processing['gap'] = 20;
+                } else {
+                    $current_wall_data_for_processing['gap'] = $gap_val;
+                }
+            } else {
+                // Non-numeric, non-empty string, default to 4
+                $current_wall_data_for_processing['gap'] = 4;
+            }
+        } elseif ($is_new_wall && !isset($current_wall_data_for_processing['gap'])) {
+            $current_wall_data_for_processing['gap'] = 4; // Ensure default for new if not set
+        }
+
+        // Debug output to error log
+        error_log('Gap value from POST: ' . print_r($posted_gap, true));
+        error_log('Processed gap value: ' . $current_wall_data_for_processing['gap']);
+
+        if (isset($wall_data_from_post['columns'])) {
+            $current_wall_data_for_processing['columns'] = absint($wall_data_from_post['columns']);
+        }
+        if (isset($wall_data_from_post['rows'])) {
+            $current_wall_data_for_processing['rows'] = absint($wall_data_from_post['rows']);
+        }
+
+        // Handle selected_effects - this key will be present if form submitted, even if empty (no checkboxes checked)
+        if (isset($wall_data_from_post['selected_effects'])) {
+            // Wenn die ausgewählten Effekte als Array gesendet werden
+            if (is_array($wall_data_from_post['selected_effects'])) {
+                $sanitized_effects = [];
+                foreach ($wall_data_from_post['selected_effects'] as $effect_key) {
+                    if (in_array(sanitize_key($effect_key), $available_effects_keys, true)) {
+                        $sanitized_effects[] = sanitize_key($effect_key);
+                    }
+                }
+                $current_wall_data_for_processing['selected_effects'] = $sanitized_effects;
+
+                // Wenn keine Effekte ausgewählt wurden (leeres Array), setze Standard auf 'crossfade'
+                if (empty($sanitized_effects)) {
+                    $current_wall_data_for_processing['selected_effects'] = ['crossfade'];
+                }
+            } else {
+                // Wenn selected_effects kein Array ist (z.B. einzelner String), in Array konvertieren
+                $effect_key = sanitize_key($wall_data_from_post['selected_effects']);
+                if (in_array($effect_key, $available_effects_keys, true)) {
+                    $current_wall_data_for_processing['selected_effects'] = [$effect_key];
+                } else {
+                    // Ungültiger Effekt, setze Standard auf 'crossfade'
+                    $current_wall_data_for_processing['selected_effects'] = ['crossfade'];
+                }
+            }
+        } elseif ($is_new_wall) {
+            // Neue Wand ohne ausgewählte Effekte bekommt alle Effekte
+            $current_wall_data_for_processing['selected_effects'] = $available_effects_keys;
+        }
+        // Wenn selected_effects nicht gesendet wird und keine neue Wand ist,
+        // bleibt selected_effects wie es in $current_wall_data_for_processing gesetzt wurde
+
+        // Sanitize the entire wall data (this will also apply default 'crossfade' if selected_effects is empty)
+        $temp_sanitized_array = $this->sanitize_walls_setting([$current_wall_data_for_processing]);
+        $final_wall_data = $temp_sanitized_array[0];
+
+        // Save back to $walls array
+        if ($is_new_wall) {
+            $walls[] = $final_wall_data;
+        } else { // Existing wall
+            $updated_walls_array = [];
+            foreach ($walls as $wall_item) {
+                if ($wall_item['id'] === $wall_id_to_save) {
+                    $updated_walls_array[] = $final_wall_data;
+                } else {
+                    $updated_walls_array[] = $wall_item;
+                }
+            }
+            $walls = $updated_walls_array;
         }
 
         update_option('wpalw_walls', $walls);
 
         wp_send_json_success(array(
-            'id' => $wall_data['id'],
-            'name' => sanitize_text_field($wall_data['name'])
+            'id' => $final_wall_data['id'],
+            'name' => $final_wall_data['name'],
+            'message' => __('Wall settings saved successfully.', 'wp-animated-live-wall')
         ));
     }
 
@@ -420,7 +583,6 @@ class WP_Animated_Live_Wall
             wp_send_json_error('Invalid wall ID');
         }
 
-        // Can't remove default wall
         if ($wall_id === 'default') {
             wp_send_json_error('Cannot remove default wall');
         }
@@ -503,7 +665,7 @@ class WP_Animated_Live_Wall
                 $index = array_search($image_id, $wall['images']);
                 if ($index !== false) {
                     unset($walls[$key]['images'][$index]);
-                    $walls[$key]['images'] = array_values($walls[$key]['images']); // Reindex array
+                    $walls[$key]['images'] = array_values($walls[$key]['images']);
                 }
                 break;
             }
@@ -551,24 +713,21 @@ class WP_Animated_Live_Wall
      */
     public function shortcode($atts)
     {
-        // Get global settings
         $global_settings = get_option('wpalw_global_options', array());
 
-        // Default values from global settings or fallback if not set
         $default_rows = isset($global_settings['default_rows']) ? $global_settings['default_rows'] : 3;
         $default_columns = isset($global_settings['default_columns']) ? $global_settings['default_columns'] : 4;
         $default_animation_speed = isset($global_settings['default_animation_speed']) ? $global_settings['default_animation_speed'] : 5000;
-        // Wenn default_gap in den Einstellungen existiert (auch 0), diesen verwenden, sonst 4
         $default_gap = isset($global_settings['default_gap']) ? $global_settings['default_gap'] : 4;
         $default_transition = isset($global_settings['default_transition']) ? $global_settings['default_transition'] : 400;
-
         $attributes = shortcode_atts(array(
             'rows' => $default_rows,
             'columns' => $default_columns,
             'animation_speed' => $default_animation_speed,
             'gap' => $default_gap,
             'transition' => $default_transition,
-            'images' => ''
+            'images' => '',
+            'effects' => '' // Optional: Komma-getrennte Liste von Effekten
         ), $atts);
 
         if (empty($attributes['images'])) {
@@ -577,27 +736,38 @@ class WP_Animated_Live_Wall
 
         $image_ids = array_map('trim', explode(',', $attributes['images']));
 
-        // Calculate total cells available in the grid
         $total_cells = (int)$attributes['rows'] * (int)$attributes['columns'];
 
-        // Limit visible images to the number of cells
         $visible_image_ids = array_slice($image_ids, 0, $total_cells);
 
-        // Get hidden image IDs
         $hidden_image_ids = array_slice($image_ids, $total_cells);
 
-        // Build grid with CSS classes for responsive square tiles
         $output = '<div class="wp-animated-live-wall" ';
         $output .= 'data-rows="' . esc_attr($attributes['rows']) . '" ';
         $output .= 'data-columns="' . esc_attr($attributes['columns']) . '" ';
         $output .= 'data-animation-speed="' . esc_attr($attributes['animation_speed']) . '" ';
         $output .= 'data-transition="' . esc_attr($attributes['transition']) . '" ';
         $output .= 'data-gap="' . esc_attr($attributes['gap']) . '" ';
+
+        // Verarbeite Effekte, falls angegeben
+        $effects = array('crossfade'); // Standard-Effekt
+        if (!empty($attributes['effects'])) {
+            $effects = array_map('trim', explode(',', $attributes['effects']));
+            $available_effects = array_keys($this->get_available_transition_effects());
+            $effects = array_filter($effects, function ($effect) use ($available_effects) {
+                return in_array($effect, $available_effects);
+            });
+
+            // Falls keine gültigen Effekte übrig bleiben, setze auf Standard zurück
+            if (empty($effects)) {
+                $effects = array('crossfade');
+            }
+        }
+
+        $output .= 'data-effects=\'' . json_encode($effects) . '\' ';
         $output .= 'style="grid-template-columns: repeat(' . esc_attr($attributes['columns']) . ', 1fr); grid-gap: ' . esc_attr($attributes['gap']) . 'px;">';
 
-        // Add visible images to the grid
         foreach ($visible_image_ids as $index => $image_id) {
-            // Get responsive square image data
             $image_data = $this->get_square_image($image_id);
             if ($image_data) {
                 $output .= '<div class="wall-tile">';
@@ -610,7 +780,6 @@ class WP_Animated_Live_Wall
             }
         }
 
-        // Add hidden container with image data for JavaScript to use
         if (!empty($hidden_image_ids)) {
             $output .= '<div class="wpalw-hidden-images" style="display:none;">';
             foreach ($hidden_image_ids as $image_id) {
@@ -639,12 +808,10 @@ class WP_Animated_Live_Wall
      */
     private function get_square_image($image_id)
     {
-        // Check if image exists
         if (!wp_attachment_is_image($image_id)) {
             return false;
         }
 
-        // Get various square image sizes for responsive srcset
         $small = wp_get_attachment_image_src($image_id, 'wpalw-square-small');
         $medium = wp_get_attachment_image_src($image_id, 'wpalw-square-medium');
         $large = wp_get_attachment_image_src($image_id, 'wpalw-square-large');
@@ -654,7 +821,6 @@ class WP_Animated_Live_Wall
             return false;
         }
 
-        // Build srcset for responsive images
         $srcset = array();
         if ($small) $srcset[] = $small[0] . ' 300w';
         if ($medium) $srcset[] = $medium[0] . ' 600w';
