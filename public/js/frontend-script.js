@@ -296,7 +296,6 @@
     availableEffects: ['crossfade'], // Standard-Effekt
     randomize: true // Zufälliger Effekt aus den verfügbaren
   };
-
   function init() {
     $('.wp-animated-live-wall').each(function () {
       var $wall = $(this);
@@ -306,7 +305,8 @@
         rows: parseInt($wall.data('rows'), 10) || 3,
         columns: parseInt($wall.data('columns'), 10) || 4,
         animationSpeed: parseInt($wall.data('animation-speed'), 10) || options.animationSpeed,
-        transition: parseInt($wall.data('transition'), 10) || options.transition
+        transition: parseInt($wall.data('transition'), 10) || options.transition,
+        animating: false // Flag zur Kontrolle, dass nur eine Kachel gleichzeitig animiert wird
       }; // Ausgewählte Effekte aus dem data-effects Attribut lesen
       var selectedEffects = $wall.data('effects');
 
@@ -331,85 +331,174 @@
       // Setze die Wand-spezifischen Optionen
       $wall.data('options', wallOptions);
 
-      // Initialisiere die Kacheln
-      initTiles($wall);
+      // Initialisiere die Animation der Wand
+      initWallAnimation($wall);
     });
   }
-
-  function initTiles(wall) {
+  function initWallAnimation(wall) {
     var wallOptions = wall.data('options');
+    var tiles = wall.find('.wall-tile');
 
-    // Starte die Animation mit zufälligen Verzögerungen für jede Kachel
-    wall.find('.wall-tile').each(function (index) {
-      var tile = $(this);
-
-      // Setze die Position für absolute Positionierung der Bilder
-      tile.css({
+    // Setze alle Bilder auf 100% Größe und object-fit cover
+    tiles
+      .css({
         position: 'relative',
         overflow: 'hidden'
-      });
-
-      // Setze das erste Bild auf 100% Größe und object-fit cover
-      tile.find('img').css({
+      })
+      .find('img')
+      .css({
         width: '100%',
         height: '100%',
         objectFit: 'cover'
       });
 
-      // Zufällige Startverzögerung für jede Kachel
-      var delay = Math.random() * wallOptions.animationSpeed;
+    // Initialisiere die komplette Bildliste für Rotationen
+    var allImageUrls = wall.data('all-image-urls');
 
-      // Starte die Animation mit der berechneten Verzögerung
-      setTimeout(function () {
-        animateTile(tile, wallOptions);
-      }, delay);
-    });
+    if (allImageUrls && Array.isArray(allImageUrls) && allImageUrls.length > 0) {
+      // Speichere alle Bildquellen in der Wand für die Rotation
+      wall.data('all-images', allImageUrls);
+      console.log('Bildliste initialisiert mit ' + allImageUrls.length + ' Bildern aus data-attribute');
+    } else {
+      // Fallback: Sammle nur die aktuell sichtbaren Bilder
+      var visibleImages = [];
+      tiles.find('img').each(function () {
+        var src = $(this).attr('src');
+        if (visibleImages.indexOf(src) === -1) {
+          visibleImages.push(src);
+        }
+      });
+      wall.data('all-images', visibleImages);
+      console.log('Fallback-Bildliste mit ' + visibleImages.length + ' sichtbaren Bildern');
+    }
+
+    // Starte die erste Animation nach einer kurzen Verzögerung
+    setTimeout(function () {
+      animateNextTile(wall, wallOptions);
+    }, 1000);
   }
 
-  function animateTile(tile, wallOptions) {
-    // Periodisches Wechseln der Bilder
-    setTimeout(function () {
-      // Wähle zufällig ein Bild aus der versteckten Sammlung oder von anderen Kacheln
-      var wall = tile.closest('.wp-animated-live-wall');
-      var allImages = wall.find('.wall-tile img').toArray();
+  function animateNextTile(wall, wallOptions) {
+    // Wenn bereits eine Animation läuft, nichts tun
+    if (wallOptions.animating) {
+      return;
+    }
 
-      // Aktuelles Bild ausschließen
+    var tiles = wall.find('.wall-tile');
+    if (tiles.length === 0) return;
+
+    // Wähle eine zufällige Kachel aus
+    var randomTileIndex = Math.floor(Math.random() * tiles.length);
+    var randomTile = tiles.eq(randomTileIndex);
+
+    // Markiere die Wand als "animierend"
+    wallOptions.animating = true;
+
+    // Führe die Animation für diese Kachel aus
+    animateSingleTile(randomTile, wall, wallOptions);
+  }
+  function animateSingleTile(tile, wall, wallOptions) {
+    // Sammle alle aktuell sichtbaren Bilder und ihre Quellen
+    var allVisibleSources = [];
+    wall.find('.wall-tile img').each(function () {
+      allVisibleSources.push($(this).attr('src'));
+    }); // Hole die komplette Liste aller Bilder aus dem data-all-images Attribut der Wand
+    // Dieses Attribut sollte alle Bilder enthalten, die zur Wand gehören, nicht nur die aktuell sichtbaren
+    var allAvailableImages = wall.data('all-images');
+
+    // Wenn die Bildliste nicht vorhanden ist oder leer ist, initialisieren wir sie
+    if (!allAvailableImages || allAvailableImages.length === 0) {
+      allAvailableImages = [];
+
+      // 1. Versuche zuerst, die Bilder aus dem data-all-image-urls Attribut zu holen (falls vorhanden)
+      var imageUrlsFromData = wall.data('all-image-urls');
+      if (imageUrlsFromData && Array.isArray(imageUrlsFromData) && imageUrlsFromData.length > 0) {
+        allAvailableImages = imageUrlsFromData;
+      }
+      // 2. Wenn keine URL-Liste gefunden wurde, sammle zumindest die aktuell sichtbaren Bilder
+      else {
+        wall.find('.wall-tile img').each(function () {
+          var src = $(this).attr('src');
+          // Vermeide Duplikate
+          if (allAvailableImages.indexOf(src) === -1) {
+            allAvailableImages.push(src);
+          }
+        });
+      }
+
+      // Speichere die komplette Bildliste in der Wand für zukünftige Verwendung
+      wall.data('all-images', allAvailableImages);
+      console.log('Initialisierte Bildliste mit ' + allAvailableImages.length + ' Bildern für die Rotation');
+    } // Debug-Ausgabe: Aktuell verfügbare Bilder und sichtbare Quellen vergleichen
+    console.log('All available images:', allAvailableImages.length, 'Visible sources:', allVisibleSources.length);
+
+    // Finde Bilder, die aktuell nicht angezeigt werden
+    var unusedImages = allAvailableImages.filter(function (src) {
+      return allVisibleSources.indexOf(src) === -1;
+    });
+
+    console.log('Unused images found:', unusedImages.length);
+
+    // Wenn keine ungenutzten Bilder verfügbar sind, verwende die verfügbaren Bilder
+    // außer dem aktuellen Bild der zu ändernden Kachel
+    if (unusedImages.length === 0) {
       var currentImg = tile.find('img').attr('src');
-      var otherImages = allImages.filter(function (img) {
-        return $(img).attr('src') !== currentImg;
+      unusedImages = allAvailableImages.filter(function (src) {
+        return src !== currentImg;
       });
+    }
+    if (unusedImages.length === 0) {
+      // Wenn keine unused images verfügbar sind, setze das Animationsflag zurück und plane die nächste Animation
+      wallOptions.animating = false;
+      setTimeout(function () {
+        animateNextTile(wall, wallOptions);
+      }, wallOptions.animationSpeed);
+      return;
+    }
 
-      if (otherImages.length === 0) {
-        return; // Keine anderen Bilder verfügbar
+    // Zufälliges Bild aus den ungenutzten Bildern auswählen
+    var randomImgSrc = unusedImages[Math.floor(Math.random() * unusedImages.length)];
+    var nextImage = document.createElement('img');
+    nextImage.src = randomImgSrc;
+
+    // Wähle einen zufälligen Effekt aus den verfügbaren
+    var effect = 'crossfade'; // Standard-Effekt als Fallback
+    if (wallOptions.availableEffects && wallOptions.availableEffects.length > 0) {
+      effect = wallOptions.availableEffects[Math.floor(Math.random() * wallOptions.availableEffects.length)];
+
+      // Wenn der zufällig gewählte Effekt nicht implementiert ist, nutze crossfade
+      if (!effectHandlers[effect]) {
+        console.warn('Effekt nicht gefunden:', effect);
+        effect = 'crossfade';
       }
+    }
 
-      // Zufälliges Bild auswählen
-      var randomImg = otherImages[Math.floor(Math.random() * otherImages.length)];
-      var nextImage = document.createElement('img');
-      nextImage.src = $(randomImg).attr('src');
+    // Stelle sicher, dass die globale options Variable mit den aktuellen Wall-Optionen übereinstimmt
+    options.transition = wallOptions.transition;
+    options.animationSpeed = wallOptions.animationSpeed;
 
-      // Wähle einen zufälligen Effekt aus den verfügbaren
-      var effect = 'crossfade'; // Standard-Effekt als Fallback
-      if (wallOptions.availableEffects && wallOptions.availableEffects.length > 0) {
-        effect = wallOptions.availableEffects[Math.floor(Math.random() * wallOptions.availableEffects.length)];
+    // Führe den ausgewählten Effekt aus
+    console.log('Anwendung des Effekts:', effect, 'auf Kachel', tile.index());
+    // Warte bis die Animation abgeschlossen ist, um das Flag zurückzusetzen
+    var effectDuration = wallOptions.transition;
 
-        // Wenn der zufällig gewählte Effekt nicht implementiert ist, nutze crossfade
-        if (!effectHandlers[effect]) {
-          console.warn('Effekt nicht gefunden:', effect);
-          effect = 'crossfade';
-        }
-      }
-      // Stelle sicher, dass die globale options Variable mit den aktuellen Wall-Optionen übereinstimmt
-      options.transition = wallOptions.transition;
-      options.animationSpeed = wallOptions.animationSpeed;
+    // Führe den Effekt aus
+    effectHandlers[effect](tile, nextImage);
 
-      // Führe den ausgewählten Effekt aus
-      console.log('Anwendung des Effekts:', effect);
-      effectHandlers[effect](tile, nextImage);
+    // Nach Abschluss der Animation
+    setTimeout(function () {
+      // Setze das Animationsflag zurück
+      wallOptions.animating = false;
 
-      // Starte die nächste Animation
-      animateTile(tile, wallOptions);
-    }, wallOptions.animationSpeed);
+      // Berechne die Zeit bis zur nächsten Animation
+      // Mindestzeit zwischen Animationen: 2000ms oder animationSpeed, je nachdem was größer ist
+      var nextDelay = Math.max(2000, wallOptions.animationSpeed);
+
+      // Plane die nächste Animation
+      setTimeout(function () {
+        animateNextTile(wall, wallOptions);
+      }, nextDelay);
+    }, effectDuration + 100); // Extra Zeit für sicheres Beenden der Animation
   }
 
   // DOM ready
