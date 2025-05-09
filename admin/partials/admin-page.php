@@ -242,7 +242,6 @@ if (!$current_wall && !empty($walls)) {
                         <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
                     </button>
                 </div>
-
                 <h3><?php _e('Shortcode Parameters', 'wp-animated-live-wall'); ?></h3>
                 <table class="wp-list-table widefat fixed striped">
                     <thead>
@@ -268,15 +267,91 @@ if (!$current_wall && !empty($walls)) {
                             <td><?php echo esc_html($rows); ?></td>
                             <td><?php _e('Number of rows in the image grid.', 'wp-animated-live-wall'); ?></td>
                         </tr>
+                        <tr>
+                            <td><code>animation_speed</code></td>
+                            <td><?php echo esc_html($animation_speed); ?></td>
+                            <td><?php _e('Time in milliseconds between image changes.', 'wp-animated-live-wall'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>transition</code></td>
+                            <td><?php echo esc_html($transition); ?></td>
+                            <td><?php _e('Duration of transition effect in milliseconds.', 'wp-animated-live-wall'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>gap</code></td>
+                            <td><?php echo esc_html($gap); ?></td>
+                            <td><?php _e('Gap between images in pixels (0-20).', 'wp-animated-live-wall'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>effects</code></td>
+                            <td><?php echo !empty($current_wall_selected_effects) ? esc_html(implode(',', $current_wall_selected_effects)) : 'crossfade'; ?></td>
+                            <td><?php _e('Comma-separated list of transition effects to use. Available effects: crossfade,zoomfade,slideup,slidedown,slideleft,slideright,rotate,blurfade,flip', 'wp-animated-live-wall'); ?></td>
+                        </tr>
                     </tbody>
                 </table>
-
-                <h4><?php _e('Example', 'wp-animated-live-wall'); ?></h4>
+                <h4><?php _e('Examples', 'wp-animated-live-wall'); ?></h4>
                 <div class="wpalw-shortcode-box">
                     <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" columns="6" rows="4"]</code>
                     <button type="button" class="button wpalw-copy-shortcode">
                         <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
                     </button>
+                </div>
+
+                <h5><?php _e('With Custom Animation', 'wp-animated-live-wall'); ?></h5>
+                <div class="wpalw-shortcode-box">
+                    <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" columns="4" rows="3" animation_speed="3000" transition="500" gap="5" effects="<?php echo !empty($current_wall_selected_effects) ? esc_attr(implode(',', array_slice($current_wall_selected_effects, 0, 3))) : 'crossfade,slideright,blurfade'; ?>"]</code>
+                    <button type="button" class="button wpalw-copy-shortcode">
+                        <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
+                    </button>
+                </div>
+
+                <h5><?php _e('Available Animation Effects', 'wp-animated-live-wall'); ?></h5>
+                <p><?php _e('Here are all the animation effects that can be used in the "effects" parameter:', 'wp-animated-live-wall'); ?></p>
+
+                <table class="wp-list-table widefat fixed striped">
+                    <thead>
+                        <tr>
+                            <th><?php _e('Effect Key', 'wp-animated-live-wall'); ?></th>
+                            <th><?php _e('Description', 'wp-animated-live-wall'); ?></th>
+                            <th><?php _e('Preview', 'wp-animated-live-wall'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($available_effects as $effect_key => $effect_name) : ?>
+                            <tr>
+                                <td><code><?php echo esc_html($effect_key); ?></code></td>
+                                <td><?php echo esc_html($effect_name); ?></td>
+                                <td>
+                                    <label class="wpalw-effect-status">
+                                        <?php if (isset($current_wall_selected_effects) && in_array($effect_key, $current_wall_selected_effects)) : ?>
+                                            <span class="dashicons dashicons-yes-alt" style="color: green;" title="<?php _e('Active for this wall', 'wp-animated-live-wall'); ?>"></span>
+                                        <?php else : ?>
+                                            <span class="dashicons dashicons-no-alt" style="color: #ccc;" title="<?php _e('Not active for this wall', 'wp-animated-live-wall'); ?>"></span>
+                                        <?php endif; ?>
+                                        <?php _e('Used in this wall', 'wp-animated-live-wall'); ?>
+                                    </label>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+
+                <h4><?php _e('Generate Custom Shortcode', 'wp-animated-live-wall'); ?></h4>
+                <p><?php _e('Generate a shortcode with your selected settings and animation effects.', 'wp-animated-live-wall'); ?></p>
+
+                <div class="wpalw-shortcode-generator">
+                    <div class="wpalw-shortcode-controls">
+                        <button type="button" id="generate-custom-shortcode" class="button button-primary">
+                            <?php _e('Generate Shortcode with Current Settings', 'wp-animated-live-wall'); ?>
+                        </button>
+                    </div>
+
+                    <div class="wpalw-shortcode-preview" style="margin-top: 15px;">
+                        <textarea id="custom-shortcode-preview" rows="3" style="width: 100%; font-family: monospace;" readonly></textarea>
+                        <p class="description">
+                            <?php _e('This shortcode includes your current wall settings and all selected animation effects.', 'wp-animated-live-wall'); ?>
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

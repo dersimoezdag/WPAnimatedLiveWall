@@ -306,6 +306,56 @@
       }, 2000);
     });
 
+    // Erweiterte Shortcode-Generierung mit ausgewählten Effekten
+    $('#generate-custom-shortcode').on('click', function () {
+      var wallId = $('#wpalw-wall-id').val();
+      var columns = $('#wpalw_columns').val() || 4;
+      var rows = $('#wpalw_rows').val() || 3;
+      var animationSpeed = $('#wpalw_animation_speed').val() || 5000;
+      var transition = $('#wpalw_transition').val() || 400;
+      var gap = $('#wpalw_gap').val() || 4;
+
+      // Sammle ausgewählte Effekte
+      var selectedEffects = [];
+      $('input[name="wpalw_selected_effects[]"]:checked').each(function () {
+        selectedEffects.push($(this).val());
+      });
+
+      var effectsString = selectedEffects.length > 0 ? ' effects="' + selectedEffects.join(',') + '"' : '';
+
+      // Generiere den Shortcode
+      var shortcode =
+        '[animated_live_wall id="' +
+        wallId +
+        '" columns="' +
+        columns +
+        '" rows="' +
+        rows +
+        '" animation_speed="' +
+        animationSpeed +
+        '" transition="' +
+        transition +
+        '" gap="' +
+        gap +
+        '"' +
+        effectsString +
+        ']';
+
+      // Zeige den generierten Shortcode im Feld an
+      $('#custom-shortcode-preview').val(shortcode);
+
+      // Scrolle zum Shortcode-Feld
+      $('html, body').animate(
+        {
+          scrollTop: $('#custom-shortcode-preview').offset().top - 100
+        },
+        300
+      );
+
+      // Selektiere den Text zum einfachen Kopieren
+      $('#custom-shortcode-preview').select();
+    });
+
     // Helper function to add new image to the list
     function addImage(attachment, wallId) {
       var imageId = attachment.id;

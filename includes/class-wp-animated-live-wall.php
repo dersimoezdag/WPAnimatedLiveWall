@@ -304,7 +304,6 @@ class WP_Animated_Live_Wall
         $available_effects = $this->get_available_transition_effects(); // Pass available effects to the admin page scope
         require_once WPALW_PLUGIN_DIR . 'admin/partials/admin-page.php';
     }
-
     /**
      * Live wall shortcode callback.
      */
@@ -314,6 +313,10 @@ class WP_Animated_Live_Wall
             'id' => 'default',
             'columns' => '',
             'rows' => '',
+            'animation_speed' => '', // Animation speed in milliseconds
+            'transition' => '',      // Transition time in milliseconds
+            'gap' => '',             // Gap between images in pixels
+            'effects' => '',         // Comma-separated list of effects
         ), $atts, 'animated_live_wall');
 
         $wall_id = sanitize_key($atts['id']);
@@ -372,9 +375,25 @@ class WP_Animated_Live_Wall
         }
         if ($gap < 0) $gap = 0;
         if ($gap > 20) $gap = 20;
-
         $images = $current_wall_settings['images'];
+
+        // Verarbeite die Effekte aus dem Shortcode, falls vorhanden
         $selected_effects = isset($current_wall_settings['selected_effects']) && !empty($current_wall_settings['selected_effects']) ? $current_wall_settings['selected_effects'] : ['crossfade'];
+
+        // Wenn der effects-Parameter im Shortcode gesetzt ist, überschreibt er die Wall-Einstellungen
+        if (!empty($atts['effects'])) {
+            $shortcode_effects = array_map('trim', explode(',', $atts['effects']));
+            $available_effects_keys = array_keys($this->get_available_transition_effects());
+
+            // Filtere ungültige Effekte heraus
+            $valid_effects = array_filter($shortcode_effects, function ($effect) use ($available_effects_keys) {
+                return in_array($effect, $available_effects_keys);
+            });
+
+            if (!empty($valid_effects)) {
+                $selected_effects = $valid_effects;
+            }
+        }
 
         $wall_data_for_template = array(
             'wall_id' => $wall_id,
