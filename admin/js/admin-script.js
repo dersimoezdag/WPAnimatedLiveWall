@@ -14,6 +14,27 @@
       $(tabId).addClass('active');
     });
 
+    // Haupttab-Navigation mit automatischer Auswahl des Images-Tabs
+    $('#wpalw-admin-tabs a').click(function (e) {
+      e.preventDefault();
+      var target = $(this).attr('href');
+
+      // Update active tab
+      $('#wpalw-admin-tabs a').removeClass('nav-tab-active');
+      $(this).addClass('nav-tab-active');
+
+      // Show target content, hide others
+      $('.wpalw-tab-content').hide();
+      $(target).show();
+
+      // Bei Wechsel zum Manage Walls-Tab automatisch den Images-Tab aktivieren
+      if (target === '#tab-walls') {
+        $('.nav-tab-wrapper a[href="#images-tab"]').addClass('nav-tab-active').siblings().removeClass('nav-tab-active');
+        $('.tab-pane').hide();
+        $('#images-tab').show();
+      }
+    });
+
     // Wall selection
     $('#wpalw-select-wall').on('change', function () {
       var wallId = $(this).val();

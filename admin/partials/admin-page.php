@@ -279,6 +279,13 @@ if (!$current_wall && !empty($walls)) {
             // Show target content, hide others
             $('.wpalw-tab-content').hide();
             $(target).show();
+
+            // Wenn Manage Walls-Tab ausgewählt wird, zeige standardmäßig den Images-Tab
+            if (target === '#tab-walls') {
+                $('.nav-tab-wrapper a[href="#images-tab"]').addClass('nav-tab-active').siblings().removeClass('nav-tab-active');
+                $('.tab-pane').removeClass('active').hide();
+                $('#images-tab').addClass('active').show();
+            }
         });
 
         // Subtab-Navigation für Wall-Einstellungen
@@ -294,6 +301,13 @@ if (!$current_wall && !empty($walls)) {
             $('.tab-pane').removeClass('active').hide();
             $(target).addClass('active').show();
         });
+
+        // Initialer Zustand: Falls Manage Walls aktiv ist, zeige Images-Tab
+        if ($('#tab-walls').is(':visible')) {
+            $('.nav-tab-wrapper a[href="#images-tab"]').addClass('nav-tab-active').siblings().removeClass('nav-tab-active');
+            $('.tab-pane').removeClass('active').hide();
+            $('#images-tab').addClass('active').show();
+        }
 
         // Kopieren von Shortcodes in die Zwischenablage
         $('.wpalw-copy-shortcode').click(function() {
