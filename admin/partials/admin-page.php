@@ -234,6 +234,24 @@ if (!$current_wall && !empty($walls)) {
                             </td>
                         </tr>
                         <tr>
+                            <th scope="row">
+                                <label for="wpalw_tiles_at_once"><?php _e('Changes at Once', 'wp-animated-live-wall'); ?></label>
+                            </th>
+                            <td>
+                                <select id="wpalw_tiles_at_once" name="wpalw_tiles_at_once">
+                                    <?php
+                                    $tiles_at_once = $current_wall ? (isset($current_wall['tiles_at_once']) ? $current_wall['tiles_at_once'] : 1) : 1;
+                                    for ($i = 1; $i <= 5; $i++) :
+                                    ?>
+                                        <option value="<?php echo $i; ?>" <?php selected($tiles_at_once, $i); ?>>
+                                            <?php echo $i; ?>
+                                        </option>
+                                    <?php endfor; ?>
+                                </select>
+                                <p class="description"><?php _e('Number of tiles that change simultaneously with each animation cycle.', 'wp-animated-live-wall'); ?></p>
+                            </td>
+                        </tr>
+                        <tr>
                             <th scope="row"><?php _e('Transition Effects', 'wp-animated-live-wall'); ?></th>
                             <td>
                                 <?php if (!empty($available_effects)) : ?>
@@ -250,6 +268,31 @@ if (!$current_wall && !empty($walls)) {
                                 <?php else : ?>
                                     <p><?php _e('No transition effects available.', 'wp-animated-live-wall'); ?></p>
                                 <?php endif; ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="wpalw_keyvisual_mode">Keyvisual Mode</label>
+                            </th>
+                            <td>
+                                <input type="checkbox" id="wpalw_keyvisual_mode" name="wpalw_keyvisual_mode" value="1" <?php checked(isset($current_wall['keyvisual_mode']) && $current_wall['keyvisual_mode']); ?>>
+                                <span class="description">Enable Keyvisual (full width, overlay with title & subtitle)</span>
+                            </td>
+                        </tr>
+                        <tr class="wpalw-keyvisual-fields" style="<?php echo (isset($current_wall['keyvisual_mode']) && $current_wall['keyvisual_mode']) ? '' : 'display:none;'; ?>">
+                            <th scope="row">
+                                <label for="wpalw_keyvisual_title">Keyvisual Title</label>
+                            </th>
+                            <td>
+                                <input type="text" id="wpalw_keyvisual_title" name="wpalw_keyvisual_title" value="<?php echo isset($current_wall['keyvisual_title']) ? esc_attr($current_wall['keyvisual_title']) : ''; ?>" class="regular-text">
+                            </td>
+                        </tr>
+                        <tr class="wpalw-keyvisual-fields" style="<?php echo (isset($current_wall['keyvisual_mode']) && $current_wall['keyvisual_mode']) ? '' : 'display:none;'; ?>">
+                            <th scope="row">
+                                <label for="wpalw_keyvisual_subtitle">Keyvisual Subtitle</label>
+                            </th>
+                            <td>
+                                <input type="text" id="wpalw_keyvisual_subtitle" name="wpalw_keyvisual_subtitle" value="<?php echo isset($current_wall['keyvisual_subtitle']) ? esc_attr($current_wall['keyvisual_subtitle']) : ''; ?>" class="regular-text">
                             </td>
                         </tr>
                     </table>
@@ -313,6 +356,11 @@ if (!$current_wall && !empty($walls)) {
                             <td><?php echo !empty($current_wall_selected_effects) ? esc_html(implode(',', $current_wall_selected_effects)) : 'crossfade'; ?></td>
                             <td><?php _e('Comma-separated list of transition effects to use. Available effects: crossfade,zoomfade,slideup,slidedown,slideleft,slideright,rotate,blurfade,flip', 'wp-animated-live-wall'); ?></td>
                         </tr>
+                        <tr>
+                            <td><code>tiles_at_once</code></td>
+                            <td><?php echo esc_html($tiles_at_once); ?></td>
+                            <td><?php _e('Number of tiles that change simultaneously with each animation cycle.', 'wp-animated-live-wall'); ?></td>
+                        </tr>
                     </tbody>
                 </table>
                 <h4><?php _e('Examples', 'wp-animated-live-wall'); ?></h4>
@@ -325,7 +373,7 @@ if (!$current_wall && !empty($walls)) {
 
                 <h5><?php _e('With Custom Animation', 'wp-animated-live-wall'); ?></h5>
                 <div class="wpalw-shortcode-box">
-                    <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" columns="4" rows="3" animation_speed="3000" transition="500" gap="5" effects="<?php echo !empty($current_wall_selected_effects) ? esc_attr(implode(',', array_slice($current_wall_selected_effects, 0, 3))) : 'crossfade,slideright,blurfade'; ?>"]</code>
+                    <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" columns="4" rows="3" animation_speed="3000" transition="500" gap="5" effects="<?php echo !empty($current_wall_selected_effects) ? esc_attr(implode(',', array_slice($current_wall_selected_effects, 0, 3))) : 'crossfade,slideright,blurfade'; ?>" tiles_at_once="3"]</code>
                     <button type="button" class="button wpalw-copy-shortcode">
                         <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
                     </button>
@@ -386,9 +434,12 @@ if (!$current_wall && !empty($walls)) {
     <!-- Global Settings Tab -->
     <div id="tab-global" class="wpalw-tab-content" style="<?php echo $active_tab === 'global' ? '' : 'display:none;'; ?>">
         <form method="post" action="options.php" class="wpalw-settings-form">
-            <?php settings_fields('wpalw_settings'); ?>
+            <?php settings_fields('wpalw_global_settings'); ?>
             <h2><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></h2>
             <p class="description"><?php echo esc_html__('Set default values for all animated live walls.', 'wp-animated-live-wall'); ?></p>
+
+            <!-- Hidden field to ensure we're only updating global settings, not wall data -->
+            <input type="hidden" name="wpalw_action" value="update_global_settings">
 
             <table class="form-table">
                 <tr valign="top">
@@ -424,6 +475,24 @@ if (!$current_wall && !empty($walls)) {
                         <input type="number" name="wpalw_global_options[default_gap]" value="<?php echo esc_attr($default_gap); ?>" min="0" max="20" step="1" />
                         <p class="description">
                             <?php echo esc_html__('Default gap between images in pixels (0-20px).', 'wp-animated-live-wall'); ?>
+                        </p>
+                    </td>
+                </tr>
+                <tr valign="top">
+                    <th scope="row"><?php echo esc_html__('Default Tiles at Once', 'wp-animated-live-wall'); ?></th>
+                    <td>
+                        <select name="wpalw_global_options[default_tiles_at_once]">
+                            <?php
+                            $default_tiles_at_once = isset($global_settings['default_tiles_at_once']) ? $global_settings['default_tiles_at_once'] : 1;
+                            for ($i = 1; $i <= 5; $i++) :
+                            ?>
+                                <option value="<?php echo $i; ?>" <?php selected($default_tiles_at_once, $i); ?>>
+                                    <?php echo $i; ?>
+                                </option>
+                            <?php endfor; ?>
+                        </select>
+                        <p class="description">
+                            <?php echo esc_html__('Default number of tiles that change simultaneously with each animation cycle.', 'wp-animated-live-wall'); ?>
                         </p>
                     </td>
                 </tr>
@@ -490,6 +559,15 @@ if (!$current_wall && !empty($walls)) {
                     $('.wpalw-copy-shortcode').html(originalText);
                 }, 2000);
             });
+        });
+
+        // Keyvisual mode toggle
+        $('#wpalw_keyvisual_mode').change(function() {
+            if ($(this).is(':checked')) {
+                $('.wpalw-keyvisual-fields').show();
+            } else {
+                $('.wpalw-keyvisual-fields').hide();
+            }
         });
     });
 </script>
