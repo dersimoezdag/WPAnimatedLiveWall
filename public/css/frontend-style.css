@@ -96,7 +96,6 @@
     width: 100%;
     max-width: 100%;
     aspect-ratio: var(--columns) / var(--rows);
-    /* Dynamic Aspect Ratio basierend auf Grid */
 }
 
 .wall-tile {
@@ -128,7 +127,6 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    /* Bildproportionen erhalten */
     transition: opacity 0.3s ease-in-out;
 }
 
