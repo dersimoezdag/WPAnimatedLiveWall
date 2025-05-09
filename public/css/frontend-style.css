@@ -1,0 +1,100 @@
+/**
+ * Frontend styles for WP Animated Live Wall
+ */
+
+.wpalw-container {
+    width: 100%;
+    margin: 0 auto;
+    box-sizing: border-box;
+}
+
+.wpalw-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 10px;
+    margin: 0 auto;
+}
+
+/* Responsive grid layouts */
+.wpalw-grid[data-columns="1"] {
+    grid-template-columns: repeat(1, 1fr);
+}
+
+.wpalw-grid[data-columns="2"] {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.wpalw-grid[data-columns="3"] {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.wpalw-grid[data-columns="4"] {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.wpalw-grid[data-columns="5"] {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.wpalw-grid[data-columns="6"] {
+    grid-template-columns: repeat(6, 1fr);
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 1024px) {
+
+    .wpalw-grid[data-columns="5"],
+    .wpalw-grid[data-columns="6"] {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+
+    .wpalw-grid[data-columns="4"],
+    .wpalw-grid[data-columns="5"],
+    .wpalw-grid[data-columns="6"] {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+
+    .wpalw-grid[data-columns="2"],
+    .wpalw-grid[data-columns="3"],
+    .wpalw-grid[data-columns="4"],
+    .wpalw-grid[data-columns="5"],
+    .wpalw-grid[data-columns="6"] {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Image styling */
+.wpalw-grid-item {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+
+.wpalw-image-container {
+    width: 100%;
+    height: 0;
+    padding-bottom: 100%;
+    /* Creates a square aspect ratio */
+    position: relative;
+    overflow: hidden;
+}
+
+.wpalw-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.wpalw-grid-item:hover .wpalw-image {
+    transform: scale(1.05);
+}

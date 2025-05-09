@@ -1,0 +1,110 @@
+/**
+ * Admin styles for WP Animated Live Wall
+ */
+
+/* Tab Navigation */
+.wpalw-admin-page .nav-tab-wrapper {
+    margin-bottom: 20px;
+}
+
+.wpalw-admin-page .tab-content .tab-pane {
+    display: none;
+}
+
+.wpalw-admin-page .tab-content .tab-pane.active {
+    display: block;
+}
+
+/* Image Grid */
+.wpalw-actions {
+    margin-bottom: 20px;
+}
+
+.wpalw-image-list {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -10px;
+    min-height: 100px;
+}
+
+.wpalw-image-item {
+    width: 150px;
+    margin: 0 10px 20px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.1);
+    background: #fff;
+    border-radius: 3px;
+    position: relative;
+    cursor: move;
+}
+
+.wpalw-image-preview {
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+}
+
+.wpalw-image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.wpalw-image-actions {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    text-align: center;
+    line-height: 24px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.wpalw-image-item:hover .wpalw-image-actions {
+    opacity: 1;
+}
+
+.wpalw-image-actions a {
+    color: #dc3232;
+    text-decoration: none;
+}
+
+.wpalw-image-actions .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 24px;
+}
+
+.wpalw-sortable-placeholder {
+    width: 150px;
+    height: 150px;
+    margin: 0 10px 20px;
+    border: 2px dashed #ccc;
+    border-radius: 3px;
+}
+
+/* Shortcode box */
+.wpalw-shortcode-box {
+    background: #f5f5f5;
+    padding: 12px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.wpalw-shortcode-box code {
+    flex-grow: 1;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid #ddd;
+    font-size: 14px;
+}
+
+.wpalw-shortcode-box .button {
+    margin-left: 10px;
+}
