@@ -143,7 +143,22 @@ class WP_Animated_Live_Wall
     {
         $sanitized = array();
 
-        // Add any global settings here if needed
+        // Sanitize default rows and columns
+        if (isset($input['default_rows'])) {
+            $sanitized['default_rows'] = absint($input['default_rows']);
+            // Ensure rows is between 1 and 12
+            if ($sanitized['default_rows'] < 1 || $sanitized['default_rows'] > 12) {
+                $sanitized['default_rows'] = 3;
+            }
+        }
+
+        if (isset($input['default_columns'])) {
+            $sanitized['default_columns'] = absint($input['default_columns']);
+            // Ensure columns is between 1 and 12
+            if ($sanitized['default_columns'] < 1 || $sanitized['default_columns'] > 12) {
+                $sanitized['default_columns'] = 4;
+            }
+        }
 
         return $sanitized;
     }
@@ -476,5 +491,89 @@ class WP_Animated_Live_Wall
         update_option('wpalw_walls', $walls);
 
         wp_send_json_success();
+    }
+
+    /**
+     * Shortcode for square and responsive tiles.
+     */
+    public function shortcode($atts)
+    {
+        // Get global settings
+        $global_settings = get_option('wpalw_global_options', array());
+
+        // Default values from global settings or fallback if not set
+        $default_rows = isset($global_settings['default_rows']) ? $global_settings['default_rows'] : 3;
+        $default_columns = isset($global_settings['default_columns']) ? $global_settings['default_columns'] : 4;
+
+        $attributes = shortcode_atts(array(
+            'rows' => $default_rows,
+            'columns' => $default_columns,
+            'images' => ''
+        ), $atts);
+
+        if (empty($attributes['images'])) {
+            return '';
+        }
+
+        $image_ids = array_map('trim', explode(',', $attributes['images']));
+
+        // Build grid with CSS classes for responsive square tiles
+        $output = '<div class="wp-animated-live-wall" ';
+        $output .= 'data-rows="' . esc_attr($attributes['rows']) . '" ';
+        $output .= 'data-columns="' . esc_attr($attributes['columns']) . '" ';
+        $output .= 'style="grid-template-columns: repeat(' . esc_attr($attributes['columns']) . ', 1fr);">';
+
+        foreach ($image_ids as $image_id) {
+            // Get responsive square image data
+            $image_data = $this->get_square_image($image_id);
+            if ($image_data) {
+                $output .= '<div class="wall-tile">';
+                $output .= '<img src="' . esc_url($image_data['src']) . '" ';
+                $output .= 'srcset="' . esc_attr($image_data['srcset']) . '" ';
+                $output .= 'sizes="' . esc_attr($image_data['sizes']) . '" ';
+                $output .= 'alt="">';
+                $output .= '</div>';
+            }
+        }
+
+        $output .= '</div>';
+        return $output;
+    }
+
+    /**
+     * Get square image data with responsive srcset.
+     * 
+     * @param int $image_id The attachment ID
+     * @return array|false Image data array or false if not found
+     */
+    private function get_square_image($image_id)
+    {
+        // Check if image exists
+        if (!wp_attachment_is_image($image_id)) {
+            return false;
+        }
+
+        // Get various square image sizes for responsive srcset
+        $small = wp_get_attachment_image_src($image_id, 'wpalw-square-small');
+        $medium = wp_get_attachment_image_src($image_id, 'wpalw-square-medium');
+        $large = wp_get_attachment_image_src($image_id, 'wpalw-square-large');
+        $full = wp_get_attachment_image_src($image_id, 'full');
+
+        if (!$medium) {
+            return false;
+        }
+
+        // Build srcset for responsive images
+        $srcset = array();
+        if ($small) $srcset[] = $small[0] . ' 300w';
+        if ($medium) $srcset[] = $medium[0] . ' 600w';
+        if ($large) $srcset[] = $large[0] . ' 900w';
+        if ($full) $srcset[] = $full[0] . ' ' . $full[1] . 'w';
+
+        return array(
+            'src' => $medium[0],
+            'srcset' => implode(', ', $srcset),
+            'sizes' => '(max-width: 480px) calc(50vw - 8px), (max-width: 768px) calc(33vw - 8px), calc(25vw - 8px)'
+        );
     }
 }
