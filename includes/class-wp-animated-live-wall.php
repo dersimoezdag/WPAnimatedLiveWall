@@ -66,7 +66,7 @@ class WP_Animated_Live_Wall
         add_submenu_page(
             'options-general.php',
             __('Animated Live Wall', 'wp-animated-live-wall'),
-            __('Live Wall', 'wp-animated-live-wall'),
+            __('Animated Live Wall', 'wp-animated-live-wall'),
             'manage_options',
             'wp-animated-live-wall',
             array($this, 'admin_page')
