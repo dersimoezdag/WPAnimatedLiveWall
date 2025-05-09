@@ -174,7 +174,18 @@
       );
     },
     rotate: function (tile, nextImage) {
-      // Rotate - Dreht und blendet das neue Bild ein
+      // Rotate - Dreht und blendet das neue Bild ein während das alte ausgeblendet wird
+      var currentImg = tile.find('img:first');
+      currentImg.css({
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        transformOrigin: 'center center',
+        zIndex: 1
+      });
       $(nextImage)
         .css({
           opacity: 0,
@@ -184,37 +195,53 @@
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          transform: 'rotate(-10deg) scale(0.8)'
+          transform: 'rotate(-30deg) scale(0.8)',
+          transformOrigin: 'center center',
+          zIndex: 2
         })
         .appendTo(tile);
-
-      $(nextImage).animate(
-        {
-          opacity: 1,
-          transform: 'rotate(0deg) scale(1)'
-        },
-        options.transition,
-        function () {
-          tile.find('img:first').remove();
+      var duration = options.transition;
+      var start = null;
+      function animateRotate(ts) {
+        if (!start) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        // Altes Bild rausdrehen
+        var oldAngle = 0 + 30 * progress;
+        var oldScale = 1 - 0.2 * progress;
+        var oldOpacity = 1 - progress;
+        currentImg.css({
+          opacity: oldOpacity,
+          transform: 'rotate(' + oldAngle + 'deg) scale(' + oldScale + ')'
+        });
+        // Neues Bild reindrehen
+        var newAngle = -30 + 30 * progress;
+        var newScale = 0.8 + 0.2 * progress;
+        var newOpacity = progress;
+        $(nextImage).css({
+          opacity: newOpacity,
+          transform: 'rotate(' + newAngle + 'deg) scale(' + newScale + ')'
+        });
+        if (progress < 1) {
+          requestAnimationFrame(animateRotate);
+        } else {
+          currentImg.remove();
         }
-      );
+      }
+      requestAnimationFrame(animateRotate);
     },
     blurfade: function (tile, nextImage) {
       // Blur Fade - Weichzeichnen-Effekt beim Überblenden
-      // Erfordert, dass das aktuelle Bild verwischt wird und das neue scharf erscheint
-      tile
-        .find('img:first')
-        .css({
-          filter: 'blur(0px)'
-        })
-        .animate(
-          {
-            opacity: 0,
-            filter: 'blur(5px)'
-          },
-          options.transition
-        );
-
+      var currentImg = tile.find('img:first');
+      currentImg.css({
+        filter: 'blur(0px)',
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        zIndex: 1
+      });
       $(nextImage)
         .css({
           opacity: 0,
@@ -224,30 +251,55 @@
           width: '100%',
           height: '100%',
           objectFit: 'cover',
-          filter: 'blur(5px)'
+          filter: 'blur(5px)',
+          zIndex: 2
         })
         .appendTo(tile);
-
-      $(nextImage).animate(
-        {
-          opacity: 1,
-          filter: 'blur(0px)'
-        },
-        options.transition,
-        function () {
-          tile.find('img:first').remove();
+      var duration = options.transition;
+      var start = null;
+      function animateBlur(ts) {
+        if (!start) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        // Altes Bild ausblenden und bluren
+        var oldOpacity = 1 - progress;
+        var oldBlur = 0 + 5 * progress;
+        currentImg.css({
+          opacity: oldOpacity,
+          filter: 'blur(' + oldBlur + 'px)'
+        });
+        // Neues Bild einblenden und schärfen
+        var newOpacity = progress;
+        var newBlur = 5 - 5 * progress;
+        $(nextImage).css({
+          opacity: newOpacity,
+          filter: 'blur(' + newBlur + 'px)'
+        });
+        if (progress < 1) {
+          requestAnimationFrame(animateBlur);
+        } else {
+          currentImg.remove();
         }
-      );
+      }
+      requestAnimationFrame(animateBlur);
     },
     flip: function (tile, nextImage) {
       // 3D Flip - Dreht das Element wie eine Karte um
-      // Erstelle einen Container für den 3D-Effekt
       tile.css({
-        perspective: '1000px'
+        perspective: '1000px',
+        position: 'relative'
       });
-
-      const currentImg = tile.find('img:first');
-
+      var currentImg = tile.find('img:first');
+      currentImg.css({
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        objectFit: 'cover',
+        backfaceVisibility: 'hidden',
+        transform: 'rotateY(0deg)',
+        zIndex: 1
+      });
       $(nextImage)
         .css({
           position: 'absolute',
@@ -256,36 +308,32 @@
           width: '100%',
           height: '100%',
           objectFit: 'cover',
+          backfaceVisibility: 'hidden',
           transform: 'rotateY(-180deg)',
-          backfaceVisibility: 'hidden'
+          zIndex: 2
         })
         .appendTo(tile);
-
-      currentImg.css({
-        backfaceVisibility: 'hidden'
-      });
-
-      // Animiere den Flip
-      currentImg.animate(
-        {
-          transform: 'rotateY(180deg)'
-        },
-        options.transition
-      );
-
-      $(nextImage).animate(
-        {
-          transform: 'rotateY(0deg)'
-        },
-        options.transition,
-        function () {
+      var duration = options.transition;
+      var start = null;
+      function animateFlip(ts) {
+        if (!start) start = ts;
+        var progress = Math.min((ts - start) / duration, 1);
+        var oldAngle = 0 + 180 * progress;
+        var newAngle = -180 + 180 * progress;
+        currentImg.css({
+          transform: 'rotateY(' + oldAngle + 'deg)'
+        });
+        $(nextImage).css({
+          transform: 'rotateY(' + newAngle + 'deg)'
+        });
+        if (progress < 1) {
+          requestAnimationFrame(animateFlip);
+        } else {
           currentImg.remove();
-          // Reset perspective
-          tile.css({
-            perspective: 'none'
-          });
+          tile.css({ perspective: 'none' });
         }
-      );
+      }
+      requestAnimationFrame(animateFlip);
     }
   };
 
@@ -413,55 +461,52 @@
     var allVisibleSources = [];
     wall.find('.wall-tile img').each(function () {
       allVisibleSources.push($(this).attr('src'));
-    }); // Hole die komplette Liste aller Bilder aus dem data-all-images Attribut der Wand
-    // Dieses Attribut sollte alle Bilder enthalten, die zur Wand gehören, nicht nur die aktuell sichtbaren
+    });
+    // Sammle alle Bilder, die gerade als nextImage animiert werden (opacity < 1)
+    var animatingSources = [];
+    wall.find('.wall-tile img').each(function () {
+      var $img = $(this);
+      if ($img.css('opacity') < 1) {
+        animatingSources.push($img.attr('src'));
+      }
+    });
+    // Hole die komplette Liste aller Bilder aus dem data-all-images Attribut der Wand
     var allAvailableImages = wall.data('all-images');
-
-    // Wenn die Bildliste nicht vorhanden ist oder leer ist, initialisieren wir sie
     if (!allAvailableImages || allAvailableImages.length === 0) {
       allAvailableImages = [];
-
-      // 1. Versuche zuerst, die Bilder aus dem data-all-image-urls Attribut zu holen (falls vorhanden)
       var imageUrlsFromData = wall.data('all-image-urls');
       if (imageUrlsFromData && Array.isArray(imageUrlsFromData) && imageUrlsFromData.length > 0) {
         allAvailableImages = imageUrlsFromData;
-      }
-      // 2. Wenn keine URL-Liste gefunden wurde, sammle zumindest die aktuell sichtbaren Bilder
-      else {
+      } else {
         wall.find('.wall-tile img').each(function () {
           var src = $(this).attr('src');
-          // Vermeide Duplikate
           if (allAvailableImages.indexOf(src) === -1) {
             allAvailableImages.push(src);
           }
         });
       }
-
-      // Speichere die komplette Bildliste in der Wand für zukünftige Verwendung
       wall.data('all-images', allAvailableImages);
       console.log('Initialisierte Bildliste mit ' + allAvailableImages.length + ' Bildern für die Rotation');
-    } // Debug-Ausgabe: Aktuell verfügbare Bilder und sichtbare Quellen vergleichen
-    console.log('All available images:', allAvailableImages.length, 'Visible sources:', allVisibleSources.length); // Überprüfe, ob wir genügend Bilder haben (mehr als die Anzahl der Kacheln)
+    }
+    console.log('All available images:', allAvailableImages.length, 'Visible sources:', allVisibleSources.length);
     var hasEnoughImages = wallOptions.hasEnoughImages || false;
-
-    // Strategie anpassen basierend auf der Bildanzahl
     var unusedImages = [];
     var currentImg = tile.find('img').attr('src');
-
+    // Verhindere, dass ein Bild gleichzeitig irgendwo sichtbar oder animiert ist
+    var forbiddenSources = allVisibleSources.concat(animatingSources);
+    forbiddenSources = forbiddenSources.filter(function (src, idx, arr) {
+      return arr.indexOf(src) === idx;
+    });
     if (hasEnoughImages) {
-      // Wenn wir genug Bilder haben: Zeige keine doppelten Bilder
       unusedImages = allAvailableImages.filter(function (src) {
-        // Wähle nur Bilder, die noch nicht sichtbar sind
-        return allVisibleSources.indexOf(src) === -1;
+        return forbiddenSources.indexOf(src) === -1;
       });
       console.log('Genug Bilder vorhanden. Nur ungenutzte Bilder verwenden:', unusedImages.length);
     } else {
-      // Wenn wir zu wenig Bilder haben: Erlaube Duplikate, aber vermeide das aktuelle Bild
       unusedImages = allAvailableImages.filter(function (src) {
-        // Verwende alle Bilder außer dem aktuell angezeigten in dieser Kachel
-        return src !== currentImg;
+        return src !== currentImg && forbiddenSources.indexOf(src) === -1;
       });
-      console.log('Zu wenig Bilder. Nutze andere Bilder, auch wenn sie bereits sichtbar sind:', unusedImages.length);
+      console.log('Zu wenig Bilder. Nutze andere Bilder, aber nie das aktuelle oder bereits sichtbare/animierte:', unusedImages.length);
     }
     if (unusedImages.length === 0) {
       // Wenn keine unused images verfügbar sind, setze das Animationsflag zurück und plane die nächste Animation
@@ -471,12 +516,10 @@
       }, wallOptions.animationSpeed);
       return;
     }
-
     // Zufälliges Bild aus den ungenutzten Bildern auswählen
     var randomImgSrc = unusedImages[Math.floor(Math.random() * unusedImages.length)];
     var nextImage = document.createElement('img');
     nextImage.src = randomImgSrc;
-
     // Wähle einen zufälligen Effekt aus den verfügbaren
     var effect = 'crossfade'; // Standard-Effekt als Fallback
     if (wallOptions.availableEffects && wallOptions.availableEffects.length > 0) {
