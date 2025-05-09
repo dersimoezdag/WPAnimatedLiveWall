@@ -35,11 +35,18 @@
       }
     });
 
-    // Wall selection
+    // Wall selection - Verbessern für einfachere Navigation zwischen Walls
     $('#wpalw-select-wall').on('change', function () {
       var wallId = $(this).val();
-      window.location.href = 'options-general.php?page=wp-animated-live-wall&wall=' + wallId;
+      // Bei Wall-Wechsel im Manage Walls Tab bleiben
+      window.location.href = 'options-general.php?page=wp-animated-live-wall&tab=walls&wall=' + wallId;
     });
+
+    // Bei Seitenladung den zuvor aktiven Tab wiederherstellen
+    var savedTab = localStorage.getItem('wpalw_active_tab');
+    if (savedTab && $('#tab-walls').is(':visible')) {
+      $('.nav-tab-wrapper a[href="' + savedTab + '"]').click();
+    }
 
     // Add new wall
     $('#wpalw-add-wall').on('click', function () {

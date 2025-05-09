@@ -13,7 +13,10 @@ $default_rows = isset($global_settings['default_rows']) ? $global_settings['defa
 $default_columns = isset($global_settings['default_columns']) ? $global_settings['default_columns'] : 4;
 
 // Get current wall ID from GET parameter or use default
-$current_wall_id = isset($_GET['wall_id']) ? sanitize_text_field($_GET['wall_id']) : 'default';
+$current_wall_id = isset($_GET['wall']) ? sanitize_text_field($_GET['wall']) : 'default';
+
+// Get active tab from URL
+$active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'global';
 
 // Find current wall
 $current_wall = null;
@@ -35,12 +38,12 @@ if (!$current_wall && !empty($walls)) {
     <h1><?php echo esc_html__('Animated Live Wall', 'wp-animated-live-wall'); ?></h1>
 
     <div id="wpalw-admin-tabs" class="nav-tab-wrapper">
-        <a href="#tab-global" class="nav-tab nav-tab-active"><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></a>
-        <a href="#tab-walls" class="nav-tab"><?php echo esc_html__('Manage Walls', 'wp-animated-live-wall'); ?></a>
+        <a href="#tab-global" class="nav-tab <?php echo $active_tab === 'global' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></a>
+        <a href="#tab-walls" class="nav-tab <?php echo $active_tab === 'walls' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__('Manage Walls', 'wp-animated-live-wall'); ?></a>
     </div>
 
     <!-- Global Settings Tab -->
-    <div id="tab-global" class="wpalw-tab-content">
+    <div id="tab-global" class="wpalw-tab-content" style="<?php echo $active_tab === 'global' ? '' : 'display:none;'; ?>">
         <form method="post" action="options.php" class="wpalw-settings-form">
             <?php settings_fields('wpalw_settings'); ?>
             <h2><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></h2>
@@ -72,7 +75,7 @@ if (!$current_wall && !empty($walls)) {
     </div>
 
     <!-- Manage Walls Tab -->
-    <div id="tab-walls" class="wpalw-tab-content" style="display:none;">
+    <div id="tab-walls" class="wpalw-tab-content" style="<?php echo $active_tab === 'walls' ? '' : 'display:none;'; ?>">
         <div class="wpalw-walls-bar">
             <div class="wpalw-walls-dropdown">
                 <select id="wpalw-select-wall">
