@@ -164,6 +164,17 @@
     box-sizing: border-box;
 }
 
+/* Position center (default) */
+.wpalw-keyvisual-center {
+    align-items: center;
+}
+
+/* Position left */
+.wpalw-keyvisual-left {
+    align-items: flex-start;
+    text-align: left;
+}
+
 .wpalw-keyvisual h1 {
     margin: 0 0 0.5em 0;
     font-size: 3rem;

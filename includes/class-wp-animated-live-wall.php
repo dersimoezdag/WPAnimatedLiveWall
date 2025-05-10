@@ -47,12 +47,14 @@ class WP_Animated_Live_Wall
                 'columns' => 4,
                 'rows' => 3,
                 'tiles_at_once' => 1,
-                'selected_effects' => !empty($all_effect_keys) ? $all_effect_keys : ['crossfade'], // Ensure all effects are selected for the default wall                'transition' => 400,
+                'selected_effects' => !empty($all_effect_keys) ? $all_effect_keys : ['crossfade'],
+                'transition' => 400,
                 'gap' => 4,
                 'keyvisual_mode' => false,
                 'keyvisual_title' => '',
                 'keyvisual_subtitle' => '',
-                'keyvisual_bgcolor' => 'rgba(44, 62, 80, 0.8)'
+                'keyvisual_bgcolor' => 'rgba(44, 62, 80, 0.8)',
+                'keyvisual_position' => 'center'
             );
 
             update_option('wpalw_walls', array($default_wall));
@@ -145,11 +147,12 @@ class WP_Animated_Live_Wall
                 'columns' => isset($wall_to_sanitize['columns']) ? absint($wall_to_sanitize['columns']) : 4,
                 'rows' => isset($wall_to_sanitize['rows']) ? absint($wall_to_sanitize['rows']) : 3,
                 'selected_effects' => array(),
-                'tiles_at_once' => isset($wall_to_sanitize['tiles_at_once']) ? absint($wall_to_sanitize['tiles_at_once']) : 1,                // keyvisual fields
+                'tiles_at_once' => isset($wall_to_sanitize['tiles_at_once']) ? absint($wall_to_sanitize['tiles_at_once']) : 1,
                 'keyvisual_mode' => isset($wall_to_sanitize['keyvisual_mode']) ? (bool)$wall_to_sanitize['keyvisual_mode'] : false,
                 'keyvisual_title' => isset($wall_to_sanitize['keyvisual_title']) ? sanitize_text_field($wall_to_sanitize['keyvisual_title']) : '',
                 'keyvisual_subtitle' => isset($wall_to_sanitize['keyvisual_subtitle']) ? sanitize_text_field($wall_to_sanitize['keyvisual_subtitle']) : '',
                 'keyvisual_bgcolor' => isset($wall_to_sanitize['keyvisual_bgcolor']) ? sanitize_text_field($wall_to_sanitize['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)',
+                'keyvisual_position' => isset($wall_to_sanitize['keyvisual_position']) ? sanitize_text_field($wall_to_sanitize['keyvisual_position']) : 'center',
             );
 
             if (isset($wall_to_sanitize['selected_effects']) && is_array($wall_to_sanitize['selected_effects'])) {
@@ -343,6 +346,7 @@ class WP_Animated_Live_Wall
             'keyvisual_title' => '', // Title for keyvisual
             'keyvisual_subtitle' => '', // Subtitle for keyvisual
             'keyvisual_bgcolor' => '', // Background color for keyvisual text
+            'keyvisual_position' => 'center', // Position of keyvisual text (left, center)
         ), $atts, 'animated_live_wall');
 
         $wall_id = sanitize_key($atts['id']);
@@ -397,6 +401,7 @@ class WP_Animated_Live_Wall
         $keyvisual_title = isset($current_wall_settings['keyvisual_title']) ? $current_wall_settings['keyvisual_title'] : '';
         $keyvisual_subtitle = isset($current_wall_settings['keyvisual_subtitle']) ? $current_wall_settings['keyvisual_subtitle'] : '';
         $keyvisual_bgcolor = isset($current_wall_settings['keyvisual_bgcolor']) ? $current_wall_settings['keyvisual_bgcolor'] : 'rgba(44, 62, 80, 0.8)';
+        $keyvisual_position = isset($current_wall_settings['keyvisual_position']) ? $current_wall_settings['keyvisual_position'] : 'center';
 
         if (isset($current_wall_settings['gap']) && $current_wall_settings['gap'] !== '') {
             $gap = absint($current_wall_settings['gap']);
@@ -447,11 +452,12 @@ class WP_Animated_Live_Wall
             'gap' => $gap,
             'images' => $images,
             'tiles_at_once' => $tiles_at_once,
-            'selected_effects' => $selected_effects, // Übergebe das Array direkt, nicht als JSON
+            'selected_effects' => $selected_effects,
             'keyvisual_mode' => $keyvisual_mode,
             'keyvisual_title' => $keyvisual_title,
             'keyvisual_subtitle' => $keyvisual_subtitle,
             'keyvisual_bgcolor' => !empty($atts['keyvisual_bgcolor']) ? $atts['keyvisual_bgcolor'] : $keyvisual_bgcolor,
+            'keyvisual_position' => $keyvisual_position,
         );
 
         ob_start();
@@ -604,8 +610,8 @@ class WP_Animated_Live_Wall
                 $current_wall_data_for_processing['keyvisual_title'] = isset($wall_data_from_post['keyvisual_title']) ? sanitize_text_field($wall_data_from_post['keyvisual_title']) : '';
                 $current_wall_data_for_processing['keyvisual_subtitle'] = isset($wall_data_from_post['keyvisual_subtitle']) ? sanitize_text_field($wall_data_from_post['keyvisual_subtitle']) : '';
 
-                // Save the background color setting
                 $current_wall_data_for_processing['keyvisual_bgcolor'] = isset($wall_data_from_post['keyvisual_bgcolor']) ? sanitize_text_field($wall_data_from_post['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)';
+                $current_wall_data_for_processing['keyvisual_position'] = isset($wall_data_from_post['keyvisual_position']) ? sanitize_text_field($wall_data_from_post['keyvisual_position']) : 'center';
             }
         } else {
             // If keyvisual_mode not present in POST data, set it to false
@@ -613,6 +619,7 @@ class WP_Animated_Live_Wall
             $current_wall_data_for_processing['keyvisual_title'] = '';
             $current_wall_data_for_processing['keyvisual_subtitle'] = '';
             $current_wall_data_for_processing['keyvisual_bgcolor'] = 'rgba(44, 62, 80, 0.8)';
+            $current_wall_data_for_processing['keyvisual_position'] = 'center';
         }
 
         $temp_sanitized_array = $this->sanitize_walls_setting([$current_wall_data_for_processing]);
