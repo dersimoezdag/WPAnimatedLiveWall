@@ -7,6 +7,8 @@
     margin: 0 auto;
     box-sizing: border-box;
     max-width: 100%;
+    position: relative;
+    /* Needed for absolute positioning of keyvisual */
 }
 
 .wpalw-grid {
@@ -99,7 +101,11 @@
 }
 
 .wall-tile {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     aspect-ratio: 1/1;
     /* Square tile */
     overflow: hidden;
@@ -136,4 +142,50 @@
     visibility: hidden;
     position: absolute;
     left: -9999px;
+}
+
+.wpalw-keyvisual {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    z-index: 10;
+    /* Stellt sicher, dass es über den Wall-Kacheln liegt */
+    pointer-events: none;
+    /* Erlaubt Klicks auf die darunterliegende Wall, falls der Text nicht im Weg ist */
+    padding: 20px;
+    /* Etwas Innenabstand, damit der Text nicht am Rand klebt */
+    box-sizing: border-box;
+}
+
+.wpalw-keyvisual h1 {
+    margin: 0 0 0.5em 0;
+    font-size: 3rem;
+    background-color: rgba(44, 62, 80, 0.8);
+    padding: 0.4em 0.8em;
+    border-radius: 5px;
+    display: inline-block;
+    color: #fff;
+    /* Textfarbe hinzugefügt */
+    pointer-events: auto;
+    /* Erlaubt Textauswahl etc. */
+}
+
+.wpalw-keyvisual p {
+    margin: 0;
+    font-size: 1.5rem;
+    background-color: rgba(44, 62, 80, 0.8);
+    padding: 0.2em 0.5em;
+    border-radius: 5px;
+    display: inline-block;
+    color: #fff;
+    /* Textfarbe hinzugefügt */
+    pointer-events: auto;
+    /* Erlaubt Textauswahl etc. */
 }

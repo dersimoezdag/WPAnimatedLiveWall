@@ -15,8 +15,19 @@ $effects_json = json_encode($selected_effects);
 // Sammle alle Bildquellen für JavaScript - stelle sicher, dass alle Bilder übergeben werden
 $all_image_urls = array();
 if (isset($images) && is_array($images)) {
+    // Calculate appropriate image size based on rows and columns
+    $tile_count = $rows * $columns;
+    $image_size = 'medium'; // Default fallback
+
+    // Use thumbnail for many tiles, medium for average, large for few tiles
+    if ($tile_count > 16) {
+        $image_size = 'thumbnail';
+    } elseif ($tile_count <= 6) {
+        $image_size = 'large';
+    }
+
     foreach ($images as $image_id) {
-        $image = wp_get_attachment_image_src($image_id, 'large');
+        $image = wp_get_attachment_image_src($image_id, $image_size);
         if ($image) {
             $all_image_urls[] = $image[0];
         }
@@ -28,12 +39,18 @@ $all_image_urls_json = json_encode($all_image_urls);
 $has_enough_images = count($all_image_urls) >= ($rows * $columns);
 ?>
 
-<div class="wpalw-container" id="wpalw-container-<?php echo $wall_id; ?>">
-
-    <?php if (isset($keyvisual_mode) && $keyvisual_mode) : ?>
-        <div class="wpalw-keyvisual" style="width: 100%; padding: 5em 1em; background-color: #2c3e50; color: white; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; box-sizing: border-box;">
-            <h1 style="margin: 0 0 0.5em 0; font-size: 3rem;"> <?php echo isset($keyvisual_title) ? htmlspecialchars($keyvisual_title, ENT_QUOTES, 'UTF-8') : ''; ?> </h1>
-            <p style="margin: 0; font-size: 1.5rem;"> <?php echo isset($keyvisual_subtitle) ? htmlspecialchars($keyvisual_subtitle, ENT_QUOTES, 'UTF-8') : ''; ?> </p>
+<div class="wpalw-container" id="wpalw-container-<?php echo $wall_id; ?>"> <?php if (isset($keyvisual_mode) && $keyvisual_mode) : ?>
+        <div class="wpalw-keyvisual">
+            <?php if (!empty($keyvisual_title)) : ?>
+                <h1 class="wpalw-keyvisual-title" style="background-color: <?php echo esc_attr($keyvisual_bgcolor); ?>;">
+                    <?php echo htmlspecialchars($keyvisual_title, ENT_QUOTES, 'UTF-8'); ?>
+                </h1>
+            <?php endif; ?>
+            <?php if (!empty($keyvisual_subtitle)) : ?>
+                <p class="wpalw-keyvisual-subtitle" style="background-color: <?php echo esc_attr($keyvisual_bgcolor); ?>;">
+                    <?php echo htmlspecialchars($keyvisual_subtitle, ENT_QUOTES, 'UTF-8'); ?>
+                </p>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 

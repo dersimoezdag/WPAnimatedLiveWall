@@ -295,6 +295,15 @@ if (!$current_wall && !empty($walls)) {
                                 <input type="text" id="wpalw_keyvisual_subtitle" name="wpalw_keyvisual_subtitle" value="<?php echo isset($current_wall['keyvisual_subtitle']) ? esc_attr($current_wall['keyvisual_subtitle']) : ''; ?>" class="regular-text">
                             </td>
                         </tr>
+                        <tr class="wpalw-keyvisual-fields" style="<?php echo (isset($current_wall['keyvisual_mode']) && $current_wall['keyvisual_mode']) ? '' : 'display:none;'; ?>">
+                            <th scope="row">
+                                <label for="wpalw_keyvisual_bgcolor">Text Background Color</label>
+                            </th>
+                            <td>
+                                <input type="text" id="wpalw_keyvisual_bgcolor" name="wpalw_keyvisual_bgcolor" class="wpalw-color-picker" value="<?php echo isset($current_wall['keyvisual_bgcolor']) ? esc_attr($current_wall['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)'; ?>">
+                                <p class="description">Select the background color for the keyvisual text. Use rgba format for transparency.</p>
+                            </td>
+                        </tr>
                     </table>
 
                     <?php submit_button(__('Save Settings', 'wp-animated-live-wall'), 'primary', 'submit-wall-settings'); ?>
@@ -376,6 +385,16 @@ if (!$current_wall && !empty($walls)) {
                             <td><?php echo isset($current_wall['keyvisual_subtitle']) ? esc_html($current_wall['keyvisual_subtitle']) : ''; ?></td>
                             <td><?php _e('Subtitle text for the keyvisual overlay.', 'wp-animated-live-wall'); ?></td>
                         </tr>
+                        <tr>
+                            <td><code>keyvisual_bgcolor</code></td>
+                            <td><?php echo isset($current_wall['keyvisual_bgcolor']) ? esc_html($current_wall['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)'; ?></td>
+                            <td><?php _e('Background color for the keyvisual text (supports rgba for transparency).', 'wp-animated-live-wall'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>keyvisual_bgcolor</code></td>
+                            <td><?php echo isset($current_wall['keyvisual_bgcolor']) ? esc_html($current_wall['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)'; ?></td>
+                            <td><?php _e('Background color for the keyvisual text. Use rgba format for transparency.', 'wp-animated-live-wall'); ?></td>
+                        </tr>
                     </tbody>
                 </table>
                 <h4><?php _e('Examples', 'wp-animated-live-wall'); ?></h4>
@@ -393,10 +412,9 @@ if (!$current_wall && !empty($walls)) {
                         <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
                     </button>
                 </div>
-
                 <h5><?php _e('With Keyvisual', 'wp-animated-live-wall'); ?></h5>
                 <div class="wpalw-shortcode-box">
-                    <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" keyvisual_mode="true" keyvisual_title="<?php echo isset($current_wall['keyvisual_title']) ? esc_attr($current_wall['keyvisual_title']) : 'Mein Keyvisual Titel'; ?>" keyvisual_subtitle="<?php echo isset($current_wall['keyvisual_subtitle']) ? esc_attr($current_wall['keyvisual_subtitle']) : 'Ein ansprechender Untertitel'; ?>"]</code>
+                    <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" keyvisual_mode="true" keyvisual_title="<?php echo isset($current_wall['keyvisual_title']) ? esc_attr($current_wall['keyvisual_title']) : 'Mein Keyvisual Titel'; ?>" keyvisual_subtitle="<?php echo isset($current_wall['keyvisual_subtitle']) ? esc_attr($current_wall['keyvisual_subtitle']) : 'Ein ansprechender Untertitel'; ?>" keyvisual_bgcolor="<?php echo isset($current_wall['keyvisual_bgcolor']) ? esc_attr($current_wall['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)'; ?>"]</code>
                     <button type="button" class="button wpalw-copy-shortcode">
                         <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
                     </button>

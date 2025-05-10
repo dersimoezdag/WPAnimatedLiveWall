@@ -47,12 +47,12 @@ class WP_Animated_Live_Wall
                 'columns' => 4,
                 'rows' => 3,
                 'tiles_at_once' => 1,
-                'selected_effects' => !empty($all_effect_keys) ? $all_effect_keys : ['crossfade'], // Ensure all effects are selected for the default wall
-                'transition' => 400,
+                'selected_effects' => !empty($all_effect_keys) ? $all_effect_keys : ['crossfade'], // Ensure all effects are selected for the default wall                'transition' => 400,
                 'gap' => 4,
                 'keyvisual_mode' => false,
                 'keyvisual_title' => '',
-                'keyvisual_subtitle' => ''
+                'keyvisual_subtitle' => '',
+                'keyvisual_bgcolor' => 'rgba(44, 62, 80, 0.8)'
             );
 
             update_option('wpalw_walls', array($default_wall));
@@ -145,11 +145,11 @@ class WP_Animated_Live_Wall
                 'columns' => isset($wall_to_sanitize['columns']) ? absint($wall_to_sanitize['columns']) : 4,
                 'rows' => isset($wall_to_sanitize['rows']) ? absint($wall_to_sanitize['rows']) : 3,
                 'selected_effects' => array(),
-                'tiles_at_once' => isset($wall_to_sanitize['tiles_at_once']) ? absint($wall_to_sanitize['tiles_at_once']) : 1,
-                // keyvisual fields
+                'tiles_at_once' => isset($wall_to_sanitize['tiles_at_once']) ? absint($wall_to_sanitize['tiles_at_once']) : 1,                // keyvisual fields
                 'keyvisual_mode' => isset($wall_to_sanitize['keyvisual_mode']) ? (bool)$wall_to_sanitize['keyvisual_mode'] : false,
                 'keyvisual_title' => isset($wall_to_sanitize['keyvisual_title']) ? sanitize_text_field($wall_to_sanitize['keyvisual_title']) : '',
                 'keyvisual_subtitle' => isset($wall_to_sanitize['keyvisual_subtitle']) ? sanitize_text_field($wall_to_sanitize['keyvisual_subtitle']) : '',
+                'keyvisual_bgcolor' => isset($wall_to_sanitize['keyvisual_bgcolor']) ? sanitize_text_field($wall_to_sanitize['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)',
             );
 
             if (isset($wall_to_sanitize['selected_effects']) && is_array($wall_to_sanitize['selected_effects'])) {
@@ -256,8 +256,7 @@ class WP_Animated_Live_Wall
 
     /**
      * Enqueue admin styles and scripts.
-     */
-    public function enqueue_admin_styles_scripts($hook)
+     */    public function enqueue_admin_styles_scripts($hook)
     {
         if ('settings_page_wp-animated-live-wall' !== $hook) {
             return;
@@ -265,17 +264,19 @@ class WP_Animated_Live_Wall
 
         wp_enqueue_media();
 
+        // Load WordPress color picker
+        wp_enqueue_style('wp-color-picker');
+
         wp_enqueue_style(
             'wpalw-admin-style',
             WPALW_PLUGIN_URL . 'admin/css/admin-style.css',
             array(),
             WPALW_VERSION
         );
-
         wp_enqueue_script(
             'wpalw-admin-script',
             WPALW_PLUGIN_URL . 'admin/js/admin-script.js',
-            array('jquery', 'jquery-ui-sortable', 'jquery-ui-tabs'),
+            array('jquery', 'jquery-ui-sortable', 'jquery-ui-tabs', 'wp-color-picker'),
             WPALW_VERSION,
             true
         );
@@ -326,7 +327,8 @@ class WP_Animated_Live_Wall
 
     /**
      * Live wall shortcode callback.
-     */    public function live_wall_shortcode($atts)
+     */
+    public function live_wall_shortcode($atts)
     {
         $atts = shortcode_atts(array(
             'id' => 'default',
@@ -340,6 +342,7 @@ class WP_Animated_Live_Wall
             'keyvisual_mode' => '',  // Enable keyvisual overlay (true/false)
             'keyvisual_title' => '', // Title for keyvisual
             'keyvisual_subtitle' => '', // Subtitle for keyvisual
+            'keyvisual_bgcolor' => '', // Background color for keyvisual text
         ), $atts, 'animated_live_wall');
 
         $wall_id = sanitize_key($atts['id']);
@@ -390,10 +393,10 @@ class WP_Animated_Live_Wall
         $animation_speed = isset($current_wall_settings['animation_speed']) ? absint($current_wall_settings['animation_speed']) : $default_animation_speed;
         $transition = isset($current_wall_settings['transition']) ? absint($current_wall_settings['transition']) : $default_transition;
         $tiles_at_once = !empty($atts['tiles_at_once']) ? absint($atts['tiles_at_once']) : (isset($current_wall_settings['tiles_at_once']) ? absint($current_wall_settings['tiles_at_once']) : $default_tiles_at_once);
-
         $keyvisual_mode = isset($current_wall_settings['keyvisual_mode']) ? (bool)$current_wall_settings['keyvisual_mode'] : false;
         $keyvisual_title = isset($current_wall_settings['keyvisual_title']) ? $current_wall_settings['keyvisual_title'] : '';
         $keyvisual_subtitle = isset($current_wall_settings['keyvisual_subtitle']) ? $current_wall_settings['keyvisual_subtitle'] : '';
+        $keyvisual_bgcolor = isset($current_wall_settings['keyvisual_bgcolor']) ? $current_wall_settings['keyvisual_bgcolor'] : 'rgba(44, 62, 80, 0.8)';
 
         if (isset($current_wall_settings['gap']) && $current_wall_settings['gap'] !== '') {
             $gap = absint($current_wall_settings['gap']);
@@ -435,9 +438,6 @@ class WP_Animated_Live_Wall
                 $keyvisual_mode = false;
             }
         }
-
-
-
         $wall_data_for_template = array(
             'wall_id' => $wall_id,
             'columns' => $columns,
@@ -451,6 +451,7 @@ class WP_Animated_Live_Wall
             'keyvisual_mode' => $keyvisual_mode,
             'keyvisual_title' => $keyvisual_title,
             'keyvisual_subtitle' => $keyvisual_subtitle,
+            'keyvisual_bgcolor' => !empty($atts['keyvisual_bgcolor']) ? $atts['keyvisual_bgcolor'] : $keyvisual_bgcolor,
         );
 
         ob_start();
@@ -596,30 +597,22 @@ class WP_Animated_Live_Wall
 
         // Handle keyvisual settings
         if (isset($wall_data_from_post['keyvisual_mode'])) {
-            $is_keyvisual_enabled = ($wall_data_from_post['keyvisual_mode'] === 'true' || $wall_data_from_post['keyvisual_mode'] === true);
-            $current_wall_data_for_processing['keyvisual_mode'] = $is_keyvisual_enabled;
+            $keyvisual_mode_value = filter_var($wall_data_from_post['keyvisual_mode'], FILTER_VALIDATE_BOOLEAN);
+            $current_wall_data_for_processing['keyvisual_mode'] = $keyvisual_mode_value;
 
-            if ($is_keyvisual_enabled) {
+            if ($keyvisual_mode_value) {
                 $current_wall_data_for_processing['keyvisual_title'] = isset($wall_data_from_post['keyvisual_title']) ? sanitize_text_field($wall_data_from_post['keyvisual_title']) : '';
                 $current_wall_data_for_processing['keyvisual_subtitle'] = isset($wall_data_from_post['keyvisual_subtitle']) ? sanitize_text_field($wall_data_from_post['keyvisual_subtitle']) : '';
-            } else {
-                $current_wall_data_for_processing['keyvisual_title'] = '';
-                $current_wall_data_for_processing['keyvisual_subtitle'] = '';
+
+                // Save the background color setting
+                $current_wall_data_for_processing['keyvisual_bgcolor'] = isset($wall_data_from_post['keyvisual_bgcolor']) ? sanitize_text_field($wall_data_from_post['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)';
             }
-        } elseif ($is_new_wall) {
+        } else {
+            // If keyvisual_mode not present in POST data, set it to false
             $current_wall_data_for_processing['keyvisual_mode'] = false;
             $current_wall_data_for_processing['keyvisual_title'] = '';
             $current_wall_data_for_processing['keyvisual_subtitle'] = '';
-        } else {
-            if (!array_key_exists('keyvisual_mode', $current_wall_data_for_processing)) {
-                $current_wall_data_for_processing['keyvisual_mode'] = false;
-            }
-            if (!array_key_exists('keyvisual_title', $current_wall_data_for_processing)) {
-                $current_wall_data_for_processing['keyvisual_title'] = '';
-            }
-            if (!array_key_exists('keyvisual_subtitle', $current_wall_data_for_processing)) {
-                $current_wall_data_for_processing['keyvisual_subtitle'] = '';
-            }
+            $current_wall_data_for_processing['keyvisual_bgcolor'] = 'rgba(44, 62, 80, 0.8)';
         }
 
         $temp_sanitized_array = $this->sanitize_walls_setting([$current_wall_data_for_processing]);

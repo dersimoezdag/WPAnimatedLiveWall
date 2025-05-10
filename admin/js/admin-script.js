@@ -2,6 +2,16 @@
   'use strict';
 
   $(document).ready(function () {
+    // Initialisiere Farbpicker, falls vorhanden
+    if ($.fn.wpColorPicker) {
+      $('.wpalw-color-picker').wpColorPicker();
+    }
+
+    // Initialisiere den WordPress-Farbpicker
+    if ($.fn.wpColorPicker) {
+      $('.wpalw-color-picker').wpColorPicker();
+    }
+
     // Formularwerte in JSON-Objekt umwandeln
     function formToJSON(formSelector) {
       var formData = {};
