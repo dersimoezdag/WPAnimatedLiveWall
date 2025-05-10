@@ -670,16 +670,9 @@
     const wallOptions = $wall.data('options') || {};
     if (currentCount > requiredCount) {
       // Need to remove excess tiles
-      const tilesToRemove = currentCount - requiredCount;
       const $tiles = $wall.find('.wall-tile');
 
-      // Option 1: Remove excess tiles completely (better for performance)
       $tiles.slice(requiredCount).remove();
-
-      // Option 2: Hide excess tiles (alternative approach)
-      // $tiles.slice(requiredCount).hide();
-
-      console.log(`Removed ${tilesToRemove} excess tiles`);
 
       // Update hasEnoughImages flag
       wallOptions.hasEnoughImages = allImageUrls.length >= requiredCount;
@@ -702,8 +695,6 @@
 
         // Update the stored images
         $wall.data('all-images', allImageUrls);
-
-        console.log(`Extended image pool from ${originalLength} to ${allImageUrls.length} images`);
       }
       for (let i = 0; i < tilesToAdd; i++) {
         // Create a new tile with a random image
@@ -717,17 +708,8 @@
         $container.append($newTile);
       }
 
-      console.log(`Added ${tilesToAdd} new tiles`);
-
       // Update hasEnoughImages flag
       wallOptions.hasEnoughImages = allImageUrls.length >= requiredCount;
-
-      // Log status
-      if (wallOptions.hasEnoughImages) {
-        console.log(`Wall has enough images: ${allImageUrls.length} for ${requiredCount} tiles`);
-      } else {
-        console.log(`Warning: Wall needs ${requiredCount} tiles but only has ${allImageUrls.length} images`);
-      }
     }
   } // Hilfsfunktion zur Neuinitialisierung der Wand bei Bildschirmgrößenänderungen
   function reinitializeWall() {
@@ -766,8 +748,6 @@
           // Prüfe, ob genug Bilder vorhanden sind
           const allImages = $wall.data('all-images') || [];
           wallOptions.hasEnoughImages = allImages.length >= totalTiles;
-
-          console.log(`Grid size changed: ${wallOptions.previousColumns}x${wallOptions.previousRows} -> ${wallOptions.currentColumns}x${wallOptions.currentRows}`);
         }
 
         // Animation wieder starten
