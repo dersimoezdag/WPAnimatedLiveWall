@@ -350,7 +350,7 @@
       var $wall = $(this);
 
       // Debug: Zeige alle data-Attribute an
-      console.log('Wall data attributes:', $wall.data());
+      // console.log('Wall data attributes:', $wall.data());
 
       // Zufällige ID generieren, falls keine vorhanden ist
       var wallId = $wall.data('id');

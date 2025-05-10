@@ -24,8 +24,12 @@
         .each(function () {
           selectedEffects.push($(this).val());
         });
-      console.log('Selected effects:', selectedEffects); // Debug
       formData['selected_effects'] = selectedEffects;
+
+      // Keyvisual-Felder
+      formData['keyvisual_mode'] = $(formSelector).find('input[name="wpalw_keyvisual_mode"]').is(':checked');
+      formData['keyvisual_title'] = $(formSelector).find('input[name="wpalw_keyvisual_title"]').val();
+      formData['keyvisual_subtitle'] = $(formSelector).find('input[name="wpalw_keyvisual_subtitle"]').val();
 
       return formData;
     }
@@ -227,7 +231,20 @@
       update: function () {
         updateImageOrder();
       }
-    }); // Einstellungen speichern
+    });
+
+    // Keyvisual mode toggle
+    $('#wpalw_keyvisual_mode')
+      .change(function () {
+        if ($(this).is(':checked')) {
+          $('.wpalw-keyvisual-fields').show();
+        } else {
+          $('.wpalw-keyvisual-fields').hide();
+        }
+      })
+      .trigger('change'); // Trigger change on page load to set initial state
+
+    // Einstellungen speichern
     $('#wpalw-settings-form').submit(function (e) {
       e.preventDefault();
 
@@ -244,11 +261,6 @@
       // Sammle Formulardaten
       var formData = formToJSON('#wpalw-settings-form');
       formData.id = wallId;
-
-      // Debug-Ausgaben
-      console.log('Speichere Einstellungen für Wall ID:', wallId);
-      console.log('Komplette Formulardaten:', formData);
-      console.log('Ausgewählte Effekte:', formData.selected_effects);
 
       // AJAX-Request senden
       $.ajax({

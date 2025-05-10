@@ -361,6 +361,21 @@ if (!$current_wall && !empty($walls)) {
                             <td><?php echo esc_html($tiles_at_once); ?></td>
                             <td><?php _e('Number of tiles that change simultaneously with each animation cycle.', 'wp-animated-live-wall'); ?></td>
                         </tr>
+                        <tr>
+                            <td><code>keyvisual_mode</code></td>
+                            <td><?php echo isset($current_wall['keyvisual_mode']) && $current_wall['keyvisual_mode'] ? 'true' : 'false'; ?></td>
+                            <td><?php _e('Enable or disable the keyvisual (full-width overlay with title and subtitle).', 'wp-animated-live-wall'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>keyvisual_title</code></td>
+                            <td><?php echo isset($current_wall['keyvisual_title']) ? esc_html($current_wall['keyvisual_title']) : ''; ?></td>
+                            <td><?php _e('Title text for the keyvisual overlay.', 'wp-animated-live-wall'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>keyvisual_subtitle</code></td>
+                            <td><?php echo isset($current_wall['keyvisual_subtitle']) ? esc_html($current_wall['keyvisual_subtitle']) : ''; ?></td>
+                            <td><?php _e('Subtitle text for the keyvisual overlay.', 'wp-animated-live-wall'); ?></td>
+                        </tr>
                     </tbody>
                 </table>
                 <h4><?php _e('Examples', 'wp-animated-live-wall'); ?></h4>
@@ -374,6 +389,14 @@ if (!$current_wall && !empty($walls)) {
                 <h5><?php _e('With Custom Animation', 'wp-animated-live-wall'); ?></h5>
                 <div class="wpalw-shortcode-box">
                     <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" columns="4" rows="3" animation_speed="3000" transition="500" gap="5" effects="<?php echo !empty($current_wall_selected_effects) ? esc_attr(implode(',', array_slice($current_wall_selected_effects, 0, 3))) : 'crossfade,slideright,blurfade'; ?>" tiles_at_once="3"]</code>
+                    <button type="button" class="button wpalw-copy-shortcode">
+                        <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
+                    </button>
+                </div>
+
+                <h5><?php _e('With Keyvisual', 'wp-animated-live-wall'); ?></h5>
+                <div class="wpalw-shortcode-box">
+                    <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" keyvisual_mode="true" keyvisual_title="<?php echo isset($current_wall['keyvisual_title']) ? esc_attr($current_wall['keyvisual_title']) : 'Mein Keyvisual Titel'; ?>" keyvisual_subtitle="<?php echo isset($current_wall['keyvisual_subtitle']) ? esc_attr($current_wall['keyvisual_subtitle']) : 'Ein ansprechender Untertitel'; ?>"]</code>
                     <button type="button" class="button wpalw-copy-shortcode">
                         <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
                     </button>
