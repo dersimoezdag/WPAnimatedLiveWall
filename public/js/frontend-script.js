@@ -593,6 +593,77 @@
     }, effectDuration + 100); // Extra Zeit für sicheres Beenden der Animation
   }
 
+  function adjustGrid() {
+    $('.wp-animated-live-wall').each(function () {
+      var $wall = $(this);
+      var wallOptions = $wall.data('options') || {};
+
+      // Get the desired rows and columns
+      var rows = parseInt(wallOptions.rows, 10) || 3;
+      var columns = parseInt(wallOptions.columns, 10) || 4;
+
+      // Configure responsive behavior based on screen width
+      const breakpoints = {
+        small: 350, // Small mobile screens
+        medium: 576, // Tablets and larger mobile
+        large: 768
+      };
+
+      // Get current screen width
+      const screenWidth = window.innerWidth;
+
+      // Adjust columns based on screen size
+      let actualColumns = columns;
+
+      if (screenWidth < breakpoints.small) {
+        // On very small screens, ensure at least one column but no more than 2
+        actualColumns = Math.min(2, columns);
+
+        // Make sure the last row is fully filled
+        while ((rows * actualColumns) % actualColumns !== 0) {
+          actualColumns--;
+          if (actualColumns < 1) actualColumns = 1;
+        }
+      } else if (screenWidth < breakpoints.medium) {
+        // On small screens, reduce columns but ensure at least 2
+        actualColumns = Math.max(2, Math.min(3, columns));
+
+        // Make sure the last row is fully filled
+        while ((rows * columns) % actualColumns !== 0) {
+          actualColumns--;
+          if (actualColumns < 2) break;
+        }
+      } else if (screenWidth < breakpoints.large) {
+        // On medium screens, use slightly reduced columns if original is high
+        actualColumns = columns > 4 ? columns - 1 : columns;
+
+        // Make sure the last row is fully filled
+        while ((rows * columns) % actualColumns !== 0) {
+          actualColumns--;
+          if (actualColumns < 2) break;
+        }
+      }
+
+      // Update columns for responsive layout
+      columns = actualColumns;
+
+      // Apply grid layout
+      $wall.css({
+        'grid-template-columns': 'repeat(' + columns + ', 1fr)'
+      });
+    });
+  }
+
+  // Call on page load
+  $(window).on('load', function () {
+    adjustGrid();
+  });
+
+  // Call on window resize
+  $(window).on('resize', function () {
+    adjustGrid();
+  });
+
   // DOM ready
   $(document).ready(function () {
     init();

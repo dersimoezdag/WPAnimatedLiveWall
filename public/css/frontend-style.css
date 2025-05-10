@@ -67,6 +67,8 @@
     grid-template-columns: repeat(12, 1fr);
 }
 
+
+
 /* Image styling */
 .wpalw-grid-item {
     position: relative;
@@ -97,7 +99,6 @@
     display: grid;
     width: 100%;
     max-width: 100%;
-    aspect-ratio: var(--columns) / var(--rows);
 }
 
 .wall-tile {
@@ -194,7 +195,6 @@
 
 .wpalw-keyvisual h1 {
     margin: 0 0 0.5em 0;
-    font-size: 3rem;
     background-color: rgba(44, 62, 80, 0.8);
     padding: 0.4em 0.8em;
     border-radius: 5px;
@@ -207,7 +207,6 @@
 
 .wpalw-keyvisual p {
     margin: 0;
-    font-size: 1.5rem;
     background-color: rgba(44, 62, 80, 0.8);
     padding: 0.4em 0.8em;
     border-radius: 5px;
