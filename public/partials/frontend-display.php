@@ -28,7 +28,7 @@ $all_image_urls_json = json_encode($all_image_urls);
 $has_enough_images = count($all_image_urls) >= ($rows * $columns);
 ?>
 
-Test:<?php echo $tiles_at_once; ?>
+
 <?php if (!empty($wall['keyvisual_mode'])) : ?>
     <div class="wpalw-keyvisual" style="position: relative; width: 100%; padding: 0;">
         <div class="wpalw-keyvisual-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center;">
