@@ -363,6 +363,10 @@
       var wallOptions = {
         rows: parseInt($wall.data('rows'), 10) || 3,
         columns: parseInt($wall.data('columns'), 10) || 4,
+        columns_sm: parseInt($wall.data('columns-sm'), 10) || 2,
+        columns_md: parseInt($wall.data('columns-md'), 10) || 3,
+        columns_lg: parseInt($wall.data('columns-lg'), 10) || 4,
+        columns_xl: parseInt($wall.data('columns-xl'), 10) || 5,
         animationSpeed: parseInt($wall.data('animation-speed'), 10) || options.animationSpeed,
         transition: parseInt($wall.data('transition'), 10) || options.transition,
         tilesAtOnce: isNaN(parseInt($wall.data('tiles-at-once'), 10)) ? options.tilesAtOnce : parseInt($wall.data('tiles-at-once'), 10),
@@ -397,19 +401,6 @@
   function initWallAnimation(wall) {
     var wallOptions = wall.data('options');
     var tiles = wall.find('.wall-tile');
-
-    // Setze alle Bilder auf 100% Größe und object-fit cover
-    tiles
-      .css({
-        position: 'relative',
-        overflow: 'hidden'
-      })
-      .find('img')
-      .css({
-        width: '100%',
-        height: '100%',
-        objectFit: 'cover'
-      });
 
     // Initialisiere die komplette Bildliste für Rotationen
     var allImageUrls = wall.data('all-image-urls');
@@ -592,86 +583,69 @@
       }
     }, effectDuration + 100); // Extra Zeit für sicheres Beenden der Animation
   }
-
   function adjustGrid() {
     $('.wp-animated-live-wall').each(function () {
       var $wall = $(this);
+      var wallOptions = $wall.data('options') || {};
 
       // Configure responsive behavior based on screen width
       const breakpoints = {
-        small: 350, // Small mobile screens
-        medium: 576, // Tablets and larger mobile
-        large: 768
+        sm: 576, // Small screens (mobile)
+        md: 768, // Medium screens (tablets)
+        lg: 992, // Large screens (small desktops)
+        xl: 1200 // Extra large screens (large desktops)
       };
 
       // Get current screen width
       const screenWidth = window.innerWidth;
 
-      // Adjust columns based on screen size
-      let actualColumns = columns;
+      // Determine number of columns based on screen size
+      let actualColumns = wallOptions.columns || parseInt($wall.data('columns'), 10) || 4;
+      let actualRows = wallOptions.rows || parseInt($wall.data('rows'), 10) || 3;
 
-      if (screenWidth < breakpoints.small) {
-        // On very small screens, use small-specific columns or default to 1
-        let smallScreenColumns = $wall.data('columns-sm') || 1;
-        actualColumns = Math.max(1, smallScreenColumns);
-
-        // Handle rows for small screens - hide rows if specified
-        let smallScreenRows = $wall.data('rows-sm');
-
-        // If rows-sm is set, hide tiles beyond the visible rows*columns limit
-        if (smallScreenRows !== undefined) {
-          let visibleCells = smallScreenRows * actualColumns;
-          $wall.find('.wall-tile').each(function (index) {
-            if (index < visibleCells) {
-              $(this).show();
-            } else {
-              $(this).hide();
-            }
-          });
-        }
-      } else if (screenWidth < breakpoints.medium) {
-        // On very small screens, use small-specific columns or default to 1
-        let smallScreenColumns = $wall.data('columns-md') || 1;
-        actualColumns = Math.max(1, smallScreenColumns);
-
-        // Handle rows for small screens - hide rows if specified
-        let smallScreenRows = $wall.data('rows-md');
-
-        // If rows-md is set, hide tiles beyond the visible rows*columns limit
-        if (smallScreenRows !== undefined) {
-          let visibleCells = smallScreenRows * actualColumns;
-          $wall.find('.wall-tile').each(function (index) {
-            if (index < visibleCells) {
-              $(this).show();
-            } else {
-              $(this).hide();
-            }
-          });
-        }
-      } else if (screenWidth < breakpoints.large) {
-        // On very small screens, use small-specific columns or default to 1
-        let smallScreenColumns = $wall.data('columns-lg') || 1;
-        actualColumns = Math.max(1, smallScreenColumns);
-
-        // Handle rows for small screens - hide rows if specified
-        let smallScreenRows = $wall.data('rows-lg');
-
-        // If rows-lg is set, hide tiles beyond the visible rows*columns limit
-        if (smallScreenRows !== undefined) {
-          let visibleCells = smallScreenRows * actualColumns;
-          $wall.find('.wall-tile').each(function (index) {
-            if (index < visibleCells) {
-              $(this).show();
-            } else {
-              $(this).hide();
-            }
-          });
-        }
-      } else {
-        // On larger screens, use the original columns and rows
-        actualColumns = columns;
-        smallScreenRows = rows;
+      // Check for responsive column and row settings
+      if (screenWidth < breakpoints.sm) {
+        // Small screens - mobile
+        const smColumns = parseInt($wall.data('columns-sm'), 10);
+        const smRows = parseInt($wall.data('rows-sm'), 10);
+        if (!isNaN(smColumns)) actualColumns = smColumns;
+        if (!isNaN(smRows)) actualRows = smRows;
+      } else if (screenWidth < breakpoints.md) {
+        // Medium screens - large mobile/small tablets
+        const mdColumns = parseInt($wall.data('columns-md'), 10);
+        const mdRows = parseInt($wall.data('rows-md'), 10);
+        if (!isNaN(mdColumns)) actualColumns = mdColumns;
+        if (!isNaN(mdRows)) actualRows = mdRows;
+      } else if (screenWidth < breakpoints.lg) {
+        // Large screens - tablets/small laptops
+        const lgColumns = parseInt($wall.data('columns-lg'), 10);
+        const lgRows = parseInt($wall.data('rows-lg'), 10);
+        if (!isNaN(lgColumns)) actualColumns = lgColumns;
+        if (!isNaN(lgRows)) actualRows = lgRows;
+      } else if (screenWidth >= breakpoints.xl) {
+        // Extra large screens - desktops
+        const xlColumns = parseInt($wall.data('columns-xl'), 10);
+        const xlRows = parseInt($wall.data('rows-xl'), 10);
+        if (!isNaN(xlColumns)) actualColumns = xlColumns;
+        if (!isNaN(xlRows)) actualRows = xlRows;
       }
+
+      // Ensure we have valid numbers for columns and rows
+      actualColumns = Math.max(1, Math.min(12, actualColumns));
+      actualRows = Math.max(1, Math.min(12, actualRows));
+
+      // Update the wallOptions with the current values
+      wallOptions.currentColumns = actualColumns;
+      wallOptions.currentRows = actualRows;
+
+      // Calculate total required tiles
+      const requiredTiles = actualColumns * actualRows;
+
+      // Get current number of tiles
+      const currentTiles = $wall.find('.wall-tile').length;
+
+      // Add or remove tiles as needed
+      adjustTiles($wall, currentTiles, requiredTiles);
 
       // Apply grid layout
       $wall.css({
@@ -679,15 +653,142 @@
       });
     });
   }
+  // Function to add or remove tiles as needed
+  function adjustTiles($wall, currentCount, requiredCount) {
+    if (currentCount === requiredCount) {
+      // No adjustment needed
+      return;
+    }
+
+    // All available image URLs
+    const allImageUrls = $wall.data('all-images') || [];
+    if (allImageUrls.length === 0) {
+      return;
+    }
+
+    // Get wall options
+    const wallOptions = $wall.data('options') || {};
+    if (currentCount > requiredCount) {
+      // Need to remove excess tiles
+      const tilesToRemove = currentCount - requiredCount;
+      const $tiles = $wall.find('.wall-tile');
+
+      // Option 1: Remove excess tiles completely (better for performance)
+      $tiles.slice(requiredCount).remove();
+
+      // Option 2: Hide excess tiles (alternative approach)
+      // $tiles.slice(requiredCount).hide();
+
+      console.log(`Removed ${tilesToRemove} excess tiles`);
+
+      // Update hasEnoughImages flag
+      wallOptions.hasEnoughImages = allImageUrls.length >= requiredCount;
+    } else {
+      // Need to add more tiles
+      const tilesToAdd = requiredCount - currentCount;
+      const $container = $wall;
+
+      // Check if we have enough unique images
+      const uniqueImagesNeeded = Math.max(requiredCount, allImageUrls.length);
+
+      // If we don't have enough unique images, clone some existing ones
+      if (allImageUrls.length < uniqueImagesNeeded && allImageUrls.length > 0) {
+        // Clone images until we have at least the required number
+        const originalLength = allImageUrls.length;
+        for (let i = 0; i < uniqueImagesNeeded - originalLength; i++) {
+          // Cycle through original images
+          allImageUrls.push(allImageUrls[i % originalLength]);
+        }
+
+        // Update the stored images
+        $wall.data('all-images', allImageUrls);
+
+        console.log(`Extended image pool from ${originalLength} to ${allImageUrls.length} images`);
+      }
+      for (let i = 0; i < tilesToAdd; i++) {
+        // Create a new tile with a random image
+        const randomImgSrc = allImageUrls[Math.floor(Math.random() * allImageUrls.length)];
+
+        // Create tile with proper styling
+        const $newTile = $('<div class="wall-tile" style="position: relative; overflow: hidden;"></div>');
+        const $newImg = $('<img src="' + randomImgSrc + '" style="width: 100%; height: 100%; object-fit: cover;">');
+
+        $newTile.append($newImg);
+        $container.append($newTile);
+      }
+
+      console.log(`Added ${tilesToAdd} new tiles`);
+
+      // Update hasEnoughImages flag
+      wallOptions.hasEnoughImages = allImageUrls.length >= requiredCount;
+
+      // Log status
+      if (wallOptions.hasEnoughImages) {
+        console.log(`Wall has enough images: ${allImageUrls.length} for ${requiredCount} tiles`);
+      } else {
+        console.log(`Warning: Wall needs ${requiredCount} tiles but only has ${allImageUrls.length} images`);
+      }
+    }
+  } // Hilfsfunktion zur Neuinitialisierung der Wand bei Bildschirmgrößenänderungen
+  function reinitializeWall() {
+    // Alle Animationen pausieren
+    $('.wp-animated-live-wall').each(function () {
+      var $wall = $(this);
+      var wallOptions = $wall.data('options') || {};
+
+      // Animation pausieren
+      wallOptions.animating = true;
+
+      // Speichere die aktuelle Konfiguration für einen Vergleich nach der Anpassung
+      wallOptions.previousColumns = wallOptions.currentColumns || wallOptions.columns;
+      wallOptions.previousRows = wallOptions.currentRows || wallOptions.rows;
+    });
+
+    // Grid anpassen
+    adjustGrid();
+
+    // Nach einer kurzen Pause die Animation wieder starten
+    setTimeout(function () {
+      $('.wp-animated-live-wall').each(function () {
+        var $wall = $(this);
+        var wallOptions = $wall.data('options') || {};
+
+        // Prüfen, ob sich die Struktur geändert hat
+        const columnsChanged = wallOptions.previousColumns !== wallOptions.currentColumns;
+        const rowsChanged = wallOptions.previousRows !== wallOptions.currentRows;
+
+        // Wenn sich die Struktur geändert hat, aktualisiere auch die Kacheln-Verwaltung
+        if (columnsChanged || rowsChanged) {
+          // Aktualisiere die Bilder-Distribution
+          const totalTiles = wallOptions.currentColumns * wallOptions.currentRows;
+          wallOptions.tilesInAnimation = Math.min(wallOptions.tilesAtOnce, totalTiles);
+
+          // Prüfe, ob genug Bilder vorhanden sind
+          const allImages = $wall.data('all-images') || [];
+          wallOptions.hasEnoughImages = allImages.length >= totalTiles;
+
+          console.log(`Grid size changed: ${wallOptions.previousColumns}x${wallOptions.previousRows} -> ${wallOptions.currentColumns}x${wallOptions.currentRows}`);
+        }
+
+        // Animation wieder starten
+        wallOptions.animating = false;
+        animateNextTile($wall, wallOptions);
+      });
+    }, 500);
+  }
 
   // Call on page load
   $(window).on('load', function () {
     adjustGrid();
   });
 
-  // Call on window resize
+  // Debounce-Funktion für Resize-Events
+  var resizeTimeout;
   $(window).on('resize', function () {
-    adjustGrid();
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(function () {
+      reinitializeWall();
+    }, 250);
   });
 
   // DOM ready
