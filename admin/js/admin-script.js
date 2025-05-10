@@ -27,10 +27,11 @@
       formData['selected_effects'] = selectedEffects;
 
       // Keyvisual-Felder
-      formData['keyvisual_mode'] = $(formSelector).find('input[name="wpalw_keyvisual_mode"]').is(':checked');
+      formData['keyvisual_mode'] = $(formSelector).find('input[name="wpalw_keyvisual_mode"]').is(':checked') ? true : false;
       formData['keyvisual_title'] = $(formSelector).find('input[name="wpalw_keyvisual_title"]').val();
       formData['keyvisual_subtitle'] = $(formSelector).find('input[name="wpalw_keyvisual_subtitle"]').val();
 
+      console.log('FormData:', formData); // Debugging-Ausgabe
       return formData;
     }
 

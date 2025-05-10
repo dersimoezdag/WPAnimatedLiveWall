@@ -47,7 +47,12 @@ class WP_Animated_Live_Wall
                 'columns' => 4,
                 'rows' => 3,
                 'tiles_at_once' => 1,
-                'selected_effects' => !empty($all_effect_keys) ? $all_effect_keys : ['crossfade'] // Ensure all effects are selected for the default wall
+                'selected_effects' => !empty($all_effect_keys) ? $all_effect_keys : ['crossfade'], // Ensure all effects are selected for the default wall
+                'transition' => 400,
+                'gap' => 4,
+                'keyvisual_mode' => false,
+                'keyvisual_title' => '',
+                'keyvisual_subtitle' => ''
             );
 
             update_option('wpalw_walls', array($default_wall));
@@ -141,7 +146,7 @@ class WP_Animated_Live_Wall
                 'rows' => isset($wall_to_sanitize['rows']) ? absint($wall_to_sanitize['rows']) : 3,
                 'selected_effects' => array(),
                 'tiles_at_once' => isset($wall_to_sanitize['tiles_at_once']) ? absint($wall_to_sanitize['tiles_at_once']) : 1,
-                // Add keyvisual fields
+                // keyvisual fields
                 'keyvisual_mode' => isset($wall_to_sanitize['keyvisual_mode']) ? (bool)$wall_to_sanitize['keyvisual_mode'] : false,
                 'keyvisual_title' => isset($wall_to_sanitize['keyvisual_title']) ? sanitize_text_field($wall_to_sanitize['keyvisual_title']) : '',
                 'keyvisual_subtitle' => isset($wall_to_sanitize['keyvisual_subtitle']) ? sanitize_text_field($wall_to_sanitize['keyvisual_subtitle']) : '',
@@ -386,6 +391,10 @@ class WP_Animated_Live_Wall
         $transition = isset($current_wall_settings['transition']) ? absint($current_wall_settings['transition']) : $default_transition;
         $tiles_at_once = !empty($atts['tiles_at_once']) ? absint($atts['tiles_at_once']) : (isset($current_wall_settings['tiles_at_once']) ? absint($current_wall_settings['tiles_at_once']) : $default_tiles_at_once);
 
+        $keyvisual_mode = isset($current_wall_settings['keyvisual_mode']) ? (bool)$current_wall_settings['keyvisual_mode'] : false;
+        $keyvisual_title = isset($current_wall_settings['keyvisual_title']) ? $current_wall_settings['keyvisual_title'] : '';
+        $keyvisual_subtitle = isset($current_wall_settings['keyvisual_subtitle']) ? $current_wall_settings['keyvisual_subtitle'] : '';
+
         if (isset($current_wall_settings['gap']) && $current_wall_settings['gap'] !== '') {
             $gap = absint($current_wall_settings['gap']);
         } else {
@@ -411,26 +420,23 @@ class WP_Animated_Live_Wall
             if (!empty($valid_effects)) {
                 $selected_effects = $valid_effects;
             }
-        }        // Keyvisual settings
-        $wall_keyvisual_mode = isset($current_wall_settings['keyvisual_mode']) ? (bool)$current_wall_settings['keyvisual_mode'] : false;
-        $wall_keyvisual_title = isset($current_wall_settings['keyvisual_title']) ? $current_wall_settings['keyvisual_title'] : '';
-        $wall_keyvisual_subtitle = isset($current_wall_settings['keyvisual_subtitle']) ? $current_wall_settings['keyvisual_subtitle'] : '';        // Überprüfen auf Shortcode-Attribute für Keyvisual
-        $keyvisual_mode = $wall_keyvisual_mode; // Standard: Wert aus Wall-Einstellungen
+        }
 
         // Prüfen, ob das keyvisual_mode Attribut im Shortcode gesetzt ist
         if (isset($atts['keyvisual_mode']) && $atts['keyvisual_mode'] !== '') {
             // Wenn keyvisual_mode im Shortcode gesetzt ist, hat es Priorität
             if ($atts['keyvisual_mode'] === 'true' || $atts['keyvisual_mode'] === '1' || $atts['keyvisual_mode'] === true) {
                 $keyvisual_mode = true;
+                $keyvisual_title = !empty($atts['keyvisual_title']) ?
+                    $atts['keyvisual_title'] : $keyvisual_title;
+                $keyvisual_subtitle = !empty($atts['keyvisual_subtitle']) ?
+                    $atts['keyvisual_subtitle'] : $keyvisual_subtitle;
             } else if ($atts['keyvisual_mode'] === 'false' || $atts['keyvisual_mode'] === '0' || $atts['keyvisual_mode'] === false) {
                 $keyvisual_mode = false;
             }
         }
 
-        $keyvisual_title = !empty($atts['keyvisual_title']) ?
-            $atts['keyvisual_title'] : $wall_keyvisual_title;
-        $keyvisual_subtitle = !empty($atts['keyvisual_subtitle']) ?
-            $atts['keyvisual_subtitle'] : $wall_keyvisual_subtitle;
+
 
         $wall_data_for_template = array(
             'wall_id' => $wall_id,
@@ -785,7 +791,7 @@ class WP_Animated_Live_Wall
     }
 
     /**
-     * Shortcode for square and responsive tiles.
+     * Shortcode
      */
     public function shortcode($atts)
     {
