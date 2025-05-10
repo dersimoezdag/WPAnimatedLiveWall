@@ -348,6 +348,13 @@
     $('.wp-animated-live-wall').each(function () {
       var $wall = $(this);
 
+      // Zufällige ID generieren, falls keine vorhanden ist
+      var wallId = $wall.data('id');
+      if (!wallId) {
+        wallId = 'wall-' + Math.random().toString(36).substr(2, 9);
+        $wall.attr('data-id', wallId);
+      }
+
       // Optionen aus den data-Attributen lesen
       var wallOptions = {
         rows: parseInt($wall.data('rows'), 10) || 3,
