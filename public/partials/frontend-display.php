@@ -39,7 +39,7 @@ $all_image_urls_json = json_encode($all_image_urls);
 $has_enough_images = count($all_image_urls) >= ($rows * $columns);
 ?>
 
-<div class="wpalw-container" id="wpalw-container-<?php echo $wall_id; ?>"> <?php if (isset($keyvisual_mode) && $keyvisual_mode) : ?>
+<div class="wpalw-container<?php echo (isset($keyvisual_mode) && $keyvisual_mode) ? ' wpalw-keyvisual-container' : ''; ?>" id="wpalw-container-<?php echo $wall_id; ?>"> <?php if (isset($keyvisual_mode) && $keyvisual_mode) : ?>
         <div class="wpalw-keyvisual">
             <?php if (!empty($keyvisual_title)) : ?>
                 <h1 class="wpalw-keyvisual-title" style="background-color: <?php echo esc_attr($keyvisual_bgcolor); ?>;">
