@@ -539,6 +539,10 @@ class WP_Animated_Live_Wall
             $current_wall_data_for_processing['rows'] = absint($wall_data_from_post['rows']);
         }
 
+        if (isset($wall_data_from_post['tiles_at_once'])) {
+            $current_wall_data_for_processing['tiles_at_once'] = absint($wall_data_from_post['tiles_at_once']);
+        }
+
         // Handle selected_effects - this key will be present if form submitted, even if empty (no checkboxes checked)
         if (isset($wall_data_from_post['selected_effects'])) {
             // Wenn die ausgewählten Effekte als Array gesendet werden

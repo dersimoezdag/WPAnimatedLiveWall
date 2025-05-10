@@ -28,6 +28,7 @@ $all_image_urls_json = json_encode($all_image_urls);
 $has_enough_images = count($all_image_urls) >= ($rows * $columns);
 ?>
 
+Test:<?php echo $tiles_at_once; ?>
 <?php if (!empty($wall['keyvisual_mode'])) : ?>
     <div class="wpalw-keyvisual" style="position: relative; width: 100%; padding: 0;">
         <div class="wpalw-keyvisual-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center;">
@@ -37,33 +38,24 @@ $has_enough_images = count($all_image_urls) >= ($rows * $columns);
     </div>
 <?php endif; ?>
 
-<div id="wpalw-<?php echo $wall_id; ?>" class="wp-animated-live-wall"
-    data-rows="<?php echo $rows; ?>"
-    data-columns="<?php echo $columns; ?>"
-    data-animation-speed="<?php echo $animation_speed; ?>"
-    data-transition="<?php echo $transition; ?>"
-    data-gap="<?php echo $gap; ?>"
-    data-effects='<?php echo $effects_json; ?>'
-    data-all-image-urls='<?php echo $all_image_urls_json; ?>'
-    data-tiles-at-once="<?php echo $tiles_at_once; ?>"
-    style="grid-template-columns: repeat(<?php echo $columns; ?>, 1fr); grid-gap: <?php echo $gap; ?>px;"><?php
-                                                                                                            // Bilder anzeigen
-                                                                                                            $counter = 0;
-                                                                                                            $max_tiles = $rows * $columns;
+<div id="wpalw-<?php echo $wall_id; ?>" class="wp-animated-live-wall" data-rows="<?php echo $rows; ?>" data-columns="<?php echo $columns; ?>" data-animation-speed="<?php echo $animation_speed; ?>" data-transition="<?php echo $transition; ?>" data-gap="<?php echo $gap; ?>" data-effects='<?php echo $effects_json; ?>' data-all-image-urls='<?php echo $all_image_urls_json; ?>' data-tiles-at-once="<?php echo $tiles_at_once; ?>" style="grid-template-columns: repeat(<?php echo $columns; ?>, 1fr); grid-gap: <?php echo $gap; ?>px;"><?php
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                // Bilder anzeigen
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                $counter = 0;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                $max_tiles = $rows * $columns;
 
-                                                                                                            foreach ($images as $key => $image_id) :
-                                                                                                                // Nur so viele Bilder anzeigen, wie Kacheln vorhanden sind
-                                                                                                                if ($counter >= $max_tiles) break;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                foreach ($images as $key => $image_id) :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    // Nur so viele Bilder anzeigen, wie Kacheln vorhanden sind
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    if ($counter >= $max_tiles) break;
 
-                                                                                                                $image = wp_get_attachment_image_src($image_id, 'large');
-                                                                                                                if ($image) :
-                                                                                                                    $counter++;
-                                                                                                            ?>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    $image = wp_get_attachment_image_src($image_id, 'large');
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    if ($image) :
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        $counter++;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                ?>
             <div class="wall-tile">
                 <img src="<?php echo $image[0]; ?>" alt="" />
             </div>
     <?php
-                                                                                                                endif;
-                                                                                                            endforeach;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    endif;
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                endforeach;
     ?>
 </div>

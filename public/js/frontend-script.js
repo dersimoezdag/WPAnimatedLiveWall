@@ -342,14 +342,15 @@
     animationSpeed: 5000, // Zeit zwischen den Bildwechseln
     transition: 400, // Dauer der Überblendung
     availableEffects: ['crossfade'], // Standard-Effekt
-    randomize: true // Zufälliger Effekt aus den verfügbaren
-  };  function init() {
+    randomize: true, // Zufälliger Effekt aus den verfügbaren
+    tilesAtOnce: 1 // Standardmäßig 1 Kachel gleichzeitig
+  };
+  function init() {
     $('.wp-animated-live-wall').each(function () {
       var $wall = $(this);
-      
+
       // Debug: Zeige alle data-Attribute an
       console.log('Wall data attributes:', $wall.data());
-      console.log('Tiles at once raw value:', $wall.attr('data-tiles-at-once'));
 
       // Zufällige ID generieren, falls keine vorhanden ist
       var wallId = $wall.data('id');
@@ -364,7 +365,7 @@
         columns: parseInt($wall.data('columns'), 10) || 4,
         animationSpeed: parseInt($wall.data('animation-speed'), 10) || options.animationSpeed,
         transition: parseInt($wall.data('transition'), 10) || options.transition,
-        tilesAtOnce: parseInt($wall.attr('data-tiles-at-once'), 10) || 1,
+        tilesAtOnce: isNaN(parseInt($wall.data('tiles-at-once'), 10)) ? options.tilesAtOnce : parseInt($wall.data('tiles-at-once'), 10),
         animating: false, // Flag zur Kontrolle der Animation
         tilesAnimated: 0 // Zähler für animierte Kacheln
       }; // Ausgewählte Effekte aus dem data-effects Attribut lesen
@@ -385,8 +386,6 @@
       } else {
         wallOptions.availableEffects = ['crossfade']; // Fallback auf Standardeffekt
       }
-
-      console.log('Verfügbare Effekte für Wand:', wallOptions.availableEffects);
 
       // Setze die Wand-spezifischen Optionen
       $wall.data('options', wallOptions);
@@ -425,7 +424,6 @@
 
       // Speichere diese Information in den Wandoptionen
       wallOptions.hasEnoughImages = totalImages >= totalCells;
-      console.log('Bildliste initialisiert mit ' + totalImages + ' Bildern für ' + totalCells + ' Zellen. Genug Bilder: ' + wallOptions.hasEnoughImages);
     } else {
       // Fallback: Sammle nur die aktuell sichtbaren Bilder
       var visibleImages = [];
@@ -440,7 +438,6 @@
       // Prüfe, ob genug Bilder für die Wand vorhanden sind
       var totalCells = wallOptions.rows * wallOptions.columns;
       wallOptions.hasEnoughImages = visibleImages.length >= totalCells;
-      console.log('Fallback-Bildliste mit ' + visibleImages.length + ' sichtbaren Bildern für ' + totalCells + ' Zellen. Genug Bilder: ' + wallOptions.hasEnoughImages);
     }
 
     // Starte die erste Animation nach einer kurzen Verzögerung
@@ -480,18 +477,15 @@
 
     // Wähle die ersten X Kacheln aus dem gemischten Array
     var selectedTileIndices = allTileIndices.slice(0, tilesAtOnce);
-    console.log('Ausgewählte Kacheln:', selectedTileIndices, tilesAtOnce);
-    console.log('Ausgewählte Kacheln:', selectedTileIndices, tilesAtOnce);    // Animiere die ausgewählten Kacheln
+
     for (var j = 0; j < selectedTileIndices.length; j++) {
       (function (tileIndex) {
-        setTimeout(function() {
+        setTimeout(function () {
           var tile = tiles.eq(tileIndex);
           animateSingleTile(tile, wall, wallOptions);
         }, j * 150); // Kleine zeitliche Versetzung zwischen den Kacheln
       })(selectedTileIndices[j]);
     }
-    
-    console.log('Animiere ' + tilesAtOnce + ' Kacheln gleichzeitig');
 
     // Hilfsfunktion zum Mischen eines Arrays (Fisher-Yates Shuffle)
     function shuffleArray(array) {
@@ -533,9 +527,7 @@
         });
       }
       wall.data('all-images', allAvailableImages);
-      console.log('Initialisierte Bildliste mit ' + allAvailableImages.length + ' Bildern für die Rotation');
     }
-    console.log('All available images:', allAvailableImages.length, 'Visible sources:', allVisibleSources.length);
     var hasEnoughImages = wallOptions.hasEnoughImages || false;
     var unusedImages = [];
     var currentImg = tile.find('img').attr('src');
@@ -548,12 +540,10 @@
       unusedImages = allAvailableImages.filter(function (src) {
         return forbiddenSources.indexOf(src) === -1;
       });
-      console.log('Genug Bilder vorhanden. Nur ungenutzte Bilder verwenden:', unusedImages.length);
     } else {
       unusedImages = allAvailableImages.filter(function (src) {
         return src !== currentImg && forbiddenSources.indexOf(src) === -1;
       });
-      console.log('Zu wenig Bilder. Nutze andere Bilder, aber nie das aktuelle oder bereits sichtbare/animierte:', unusedImages.length);
     }
     if (unusedImages.length === 0) {
       // Wenn keine unused images verfügbar sind, setze das Animationsflag zurück und plane die nächste Animation
@@ -583,8 +573,6 @@
     options.transition = wallOptions.transition;
     options.animationSpeed = wallOptions.animationSpeed;
 
-    // Führe den ausgewählten Effekt aus
-    console.log('Anwendung des Effekts:', effect, 'auf Kachel', tile.index());
     // Warte bis die Animation abgeschlossen ist, um das Flag zurückzusetzen
     var effectDuration = wallOptions.transition;
 
