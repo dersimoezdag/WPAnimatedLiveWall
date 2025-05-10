@@ -40,6 +40,7 @@
       formData['keyvisual_mode'] = $(formSelector).find('input[name="wpalw_keyvisual_mode"]').is(':checked') ? true : false;
       formData['keyvisual_title'] = $(formSelector).find('input[name="wpalw_keyvisual_title"]').val();
       formData['keyvisual_subtitle'] = $(formSelector).find('input[name="wpalw_keyvisual_subtitle"]').val();
+      formData['keyvisual_fullwidth'] = $(formSelector).find('input[name="wpalw_keyvisual_fullwidth"]').is(':checked') ? true : false;
 
       console.log('FormData:', formData); // Debugging-Ausgabe
       return formData;

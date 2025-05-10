@@ -39,20 +39,21 @@ $all_image_urls_json = json_encode($all_image_urls);
 $has_enough_images = count($all_image_urls) >= ($rows * $columns);
 ?>
 
-<div class="wpalw-container<?php echo (isset($keyvisual_mode) && $keyvisual_mode) ? ' wpalw-keyvisual-container' : ''; ?>" id="wpalw-container-<?php echo $wall_id; ?>"> <?php if (isset($keyvisual_mode) && $keyvisual_mode) : ?>
-
-    <div class="wpalw-keyvisual wpalw-keyvisual-<?php echo esc_attr($keyvisual_position); ?>">
-        <?php if (!empty($keyvisual_title)) : ?>
-        <h1 class="wpalw-keyvisual-title" style="background-color: <?php echo esc_attr($keyvisual_bgcolor); ?>;">
-            <?php echo htmlspecialchars($keyvisual_title, ENT_QUOTES, 'UTF-8'); ?>
-        </h1>
-        <?php endif; ?>
-        <?php if (!empty($keyvisual_subtitle)) : ?>
-        <p class="wpalw-keyvisual-subtitle" style="background-color: <?php echo esc_attr($keyvisual_bgcolor); ?>;">
-            <?php echo htmlspecialchars($keyvisual_subtitle, ENT_QUOTES, 'UTF-8'); ?>
-        </p>
-        <?php endif; ?>
-    </div>
+<div class="wpalw-container<?php echo (isset($keyvisual_mode) && $keyvisual_mode) ? ' wpalw-keyvisual-container' : ''; ?><?php echo $keyvisual_fullwidth ? ' wpalw-keyvisual-extended' : ''; ?>" id="wpalw-container-<?php echo $wall_id; ?>"> <?php if (isset($keyvisual_mode) && $keyvisual_mode) : ?>
+        <div class="wpalw-keyvisual-container">
+            <div class="wpalw-keyvisual wpalw-keyvisual-<?php echo esc_attr($keyvisual_position); ?>">
+                <?php if (!empty($keyvisual_title)) : ?>
+                    <h1 class="wpalw-keyvisual-title" style="background-color: <?php echo esc_attr($keyvisual_bgcolor); ?>;">
+                        <?php echo htmlspecialchars($keyvisual_title, ENT_QUOTES, 'UTF-8'); ?>
+                    </h1>
+                <?php endif; ?>
+                <?php if (!empty($keyvisual_subtitle)) : ?>
+                    <p class="wpalw-keyvisual-subtitle" style="background-color: <?php echo esc_attr($keyvisual_bgcolor); ?>;">
+                        <?php echo htmlspecialchars($keyvisual_subtitle, ENT_QUOTES, 'UTF-8'); ?>
+                    </p>
+                <?php endif; ?>
+            </div>
+        </div>
     <?php endif; ?>
 
     <div id="wpalw-<?php echo $wall_id; ?>" class="wp-animated-live-wall" data-rows="<?php echo $rows; ?>" data-columns="<?php echo $columns; ?>" data-animation-speed="<?php echo $animation_speed; ?>" data-transition="<?php echo $transition; ?>" data-gap="<?php echo $gap; ?>" data-effects='<?php echo $effects_json; ?>' data-all-image-urls='<?php echo $all_image_urls_json; ?>' data-tiles-at-once="<?php echo $tiles_at_once; ?>" style="grid-template-columns: repeat(<?php echo $columns; ?>, 1fr); grid-gap: <?php echo $gap; ?>px;"><?php
@@ -68,9 +69,9 @@ $has_enough_images = count($all_image_urls) >= ($rows * $columns);
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         if ($image) :
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             $counter++;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     ?>
-        <div class="wall-tile">
-            <img src="<?php echo $image[0]; ?>" alt="" />
-        </div>
+                <div class="wall-tile">
+                    <img src="<?php echo $image[0]; ?>" alt="" />
+                </div>
         <?php
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         endif;
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     endforeach;

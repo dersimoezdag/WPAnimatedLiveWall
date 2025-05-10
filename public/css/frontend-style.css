@@ -164,6 +164,16 @@
     box-sizing: border-box;
 }
 
+.wpalw-keyvisual-container.wpalw-keyvisual-extended {
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    width: 100vw;
+    max-width: 100vw;
+    transform: translateZ(0);
+}
+
 /* Position center (default) */
 .wpalw-keyvisual-center {
     align-items: center;
@@ -173,6 +183,13 @@
 .wpalw-keyvisual-left {
     align-items: flex-start;
     text-align: left;
+}
+
+/* Position left */
+.wpalw-keyvisual-left-bottom {
+    align-items: flex-start;
+    text-align: left;
+    justify-content: flex-end;
 }
 
 .wpalw-keyvisual h1 {

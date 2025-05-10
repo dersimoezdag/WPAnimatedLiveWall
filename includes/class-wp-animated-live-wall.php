@@ -54,7 +54,8 @@ class WP_Animated_Live_Wall
                 'keyvisual_title' => '',
                 'keyvisual_subtitle' => '',
                 'keyvisual_bgcolor' => 'rgba(44, 62, 80, 0.8)',
-                'keyvisual_position' => 'center'
+                'keyvisual_position' => 'center',
+                'keyvisual_fullwidth' => false
             );
 
             update_option('wpalw_walls', array($default_wall));
@@ -153,6 +154,7 @@ class WP_Animated_Live_Wall
                 'keyvisual_subtitle' => isset($wall_to_sanitize['keyvisual_subtitle']) ? sanitize_text_field($wall_to_sanitize['keyvisual_subtitle']) : '',
                 'keyvisual_bgcolor' => isset($wall_to_sanitize['keyvisual_bgcolor']) ? sanitize_text_field($wall_to_sanitize['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)',
                 'keyvisual_position' => isset($wall_to_sanitize['keyvisual_position']) ? sanitize_text_field($wall_to_sanitize['keyvisual_position']) : 'center',
+                'keyvisual_fullwidth' => isset($wall_to_sanitize['keyvisual_fullwidth']) ? (bool)$wall_to_sanitize['keyvisual_fullwidth'] : false,
             );
 
             if (isset($wall_to_sanitize['selected_effects']) && is_array($wall_to_sanitize['selected_effects'])) {
@@ -342,11 +344,12 @@ class WP_Animated_Live_Wall
             'gap' => '',             // Gap between images in pixels
             'effects' => '',         // Comma-separated list of effects
             'tiles_at_once' => '',   // Number of tiles to change simultaneously
-            'keyvisual_mode' => '',  // Enable keyvisual overlay (true/false)
+            'keyvisual_mode' => '',  // Enable keyvisual overlay (true/false)      
             'keyvisual_title' => '', // Title for keyvisual
             'keyvisual_subtitle' => '', // Subtitle for keyvisual
             'keyvisual_bgcolor' => '', // Background color for keyvisual text
             'keyvisual_position' => 'center', // Position of keyvisual text (left, center)
+            'keyvisual_fullwidth' => '' // Display keyvisual in full width mode (true/false)
         ), $atts, 'animated_live_wall');
 
         $wall_id = sanitize_key($atts['id']);
@@ -402,6 +405,7 @@ class WP_Animated_Live_Wall
         $keyvisual_subtitle = isset($current_wall_settings['keyvisual_subtitle']) ? $current_wall_settings['keyvisual_subtitle'] : '';
         $keyvisual_bgcolor = isset($current_wall_settings['keyvisual_bgcolor']) ? $current_wall_settings['keyvisual_bgcolor'] : 'rgba(44, 62, 80, 0.8)';
         $keyvisual_position = isset($current_wall_settings['keyvisual_position']) ? $current_wall_settings['keyvisual_position'] : 'center';
+        $keyvisual_fullwidth = isset($current_wall_settings['keyvisual_fullwidth']) ? (bool)$current_wall_settings['keyvisual_fullwidth'] : false;
 
         if (isset($current_wall_settings['gap']) && $current_wall_settings['gap'] !== '') {
             $gap = absint($current_wall_settings['gap']);
@@ -413,9 +417,7 @@ class WP_Animated_Live_Wall
         $images = $current_wall_settings['images'];
 
         // Verarbeite die Effekte aus dem Shortcode, falls vorhanden
-        $selected_effects = isset($current_wall_settings['selected_effects']) && !empty($current_wall_settings['selected_effects']) ? $current_wall_settings['selected_effects'] : ['crossfade'];
-
-        // Wenn der effects-Parameter im Shortcode gesetzt ist, überschreibt er die Wall-Einstellungen
+        $selected_effects = isset($current_wall_settings['selected_effects']) && !empty($current_wall_settings['selected_effects']) ? $current_wall_settings['selected_effects'] : ['crossfade'];        // Wenn der effects-Parameter im Shortcode gesetzt ist, überschreibt er die Wall-Einstellungen
         if (!empty($atts['effects'])) {
             $shortcode_effects = array_map('trim', explode(',', $atts['effects']));
             $available_effects_keys = array_keys($this->get_available_transition_effects());
@@ -430,6 +432,8 @@ class WP_Animated_Live_Wall
             }
         }
 
+
+
         // Prüfen, ob das keyvisual_mode Attribut im Shortcode gesetzt ist
         if (isset($atts['keyvisual_mode']) && $atts['keyvisual_mode'] !== '') {
             // Wenn keyvisual_mode im Shortcode gesetzt ist, hat es Priorität
@@ -439,10 +443,26 @@ class WP_Animated_Live_Wall
                     $atts['keyvisual_title'] : $keyvisual_title;
                 $keyvisual_subtitle = !empty($atts['keyvisual_subtitle']) ?
                     $atts['keyvisual_subtitle'] : $keyvisual_subtitle;
+
+                // Wenn keyvisual_position im Shortcode gesetzt ist
+                if (!empty($atts['keyvisual_position']) && in_array($atts['keyvisual_position'], array('center', 'left', 'left-bottom'))) {
+                    $keyvisual_position = $atts['keyvisual_position'];
+                }
+
+                // Handle fullwidth parameter
+                if (isset($atts['keyvisual_fullwidth']) && $atts['keyvisual_fullwidth'] !== '') {
+                    if ($atts['keyvisual_fullwidth'] === 'true' || $atts['keyvisual_fullwidth'] === '1' || $atts['keyvisual_fullwidth'] === true) {
+                        $keyvisual_fullwidth = true;
+                    } else if ($atts['keyvisual_fullwidth'] === 'false' || $atts['keyvisual_fullwidth'] === '0' || $atts['keyvisual_fullwidth'] === false) {
+                        $keyvisual_fullwidth = false;
+                    }
+                }
             } else if ($atts['keyvisual_mode'] === 'false' || $atts['keyvisual_mode'] === '0' || $atts['keyvisual_mode'] === false) {
                 $keyvisual_mode = false;
             }
         }
+
+
         $wall_data_for_template = array(
             'wall_id' => $wall_id,
             'columns' => $columns,
@@ -456,8 +476,9 @@ class WP_Animated_Live_Wall
             'keyvisual_mode' => $keyvisual_mode,
             'keyvisual_title' => $keyvisual_title,
             'keyvisual_subtitle' => $keyvisual_subtitle,
-            'keyvisual_bgcolor' => !empty($atts['keyvisual_bgcolor']) ? $atts['keyvisual_bgcolor'] : $keyvisual_bgcolor,
+            'keyvisual_bgcolor' => !empty($atts['keyvisual_bgcolor']) ? sanitize_text_field($atts['keyvisual_bgcolor']) : $keyvisual_bgcolor,
             'keyvisual_position' => $keyvisual_position,
+            'keyvisual_fullwidth' => $keyvisual_fullwidth,
         );
 
         ob_start();
@@ -609,9 +630,9 @@ class WP_Animated_Live_Wall
             if ($keyvisual_mode_value) {
                 $current_wall_data_for_processing['keyvisual_title'] = isset($wall_data_from_post['keyvisual_title']) ? sanitize_text_field($wall_data_from_post['keyvisual_title']) : '';
                 $current_wall_data_for_processing['keyvisual_subtitle'] = isset($wall_data_from_post['keyvisual_subtitle']) ? sanitize_text_field($wall_data_from_post['keyvisual_subtitle']) : '';
-
                 $current_wall_data_for_processing['keyvisual_bgcolor'] = isset($wall_data_from_post['keyvisual_bgcolor']) ? sanitize_text_field($wall_data_from_post['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)';
                 $current_wall_data_for_processing['keyvisual_position'] = isset($wall_data_from_post['keyvisual_position']) ? sanitize_text_field($wall_data_from_post['keyvisual_position']) : 'center';
+                $current_wall_data_for_processing['keyvisual_fullwidth'] = isset($wall_data_from_post['keyvisual_fullwidth']) ? (bool)$wall_data_from_post['keyvisual_fullwidth'] : false;
             }
         } else {
             // If keyvisual_mode not present in POST data, set it to false
@@ -620,6 +641,7 @@ class WP_Animated_Live_Wall
             $current_wall_data_for_processing['keyvisual_subtitle'] = '';
             $current_wall_data_for_processing['keyvisual_bgcolor'] = 'rgba(44, 62, 80, 0.8)';
             $current_wall_data_for_processing['keyvisual_position'] = 'center';
+            $current_wall_data_for_processing['keyvisual_fullwidth'] = false;
         }
 
         $temp_sanitized_array = $this->sanitize_walls_setting([$current_wall_data_for_processing]);

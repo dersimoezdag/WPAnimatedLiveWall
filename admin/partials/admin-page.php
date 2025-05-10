@@ -155,15 +155,19 @@ if (!$current_wall && !empty($walls)) {
             <div id="settings-tab" class="tab-pane">
                 <h2><?php _e('Live Wall Settings', 'wp-animated-live-wall'); ?></h2>
                 <p><?php _e('Configure the behavior and appearance of your animated live wall.', 'wp-animated-live-wall'); ?></p>
-
                 <form method="post" action="options.php" id="wpalw-settings-form">
                     <?php
                     settings_fields('wpalw_settings');
                     $animation_speed = $current_wall ? $current_wall['animation_speed'] : 5000;
                     $columns = $current_wall ? $current_wall['columns'] : 4;
                     $gap = isset($current_wall['gap']) ? $current_wall['gap'] : 4;
-                    $transition = isset($current_wall['transition']) ? $current_wall['transition'] : 400;                    // Prepare selected effects for the form
+                    $transition = isset($current_wall['transition']) ? $current_wall['transition'] : 400;
+                    // Prepare selected effects for the form
                     $current_wall_selected_effects = array();
+
+                    // Stelle sicher, dass $available_effects definiert ist
+                    $available_effects = isset($available_effects) ? $available_effects : array('crossfade' => 'Crossfade');
+
                     if ($current_wall && isset($current_wall['selected_effects']) && is_array($current_wall['selected_effects'])) {
                         $current_wall_selected_effects = $current_wall['selected_effects'];
                     } elseif (!empty($available_effects)) {
@@ -312,8 +316,18 @@ if (!$current_wall && !empty($walls)) {
                                 <select id="wpalw_keyvisual_position" name="wpalw_keyvisual_position">
                                     <option value="center" <?php echo (isset($current_wall['keyvisual_position']) && $current_wall['keyvisual_position'] === 'center') ? 'selected' : ''; ?>>Center</option>
                                     <option value="left" <?php echo (isset($current_wall['keyvisual_position']) && $current_wall['keyvisual_position'] === 'left') ? 'selected' : ''; ?>>Left</option>
+                                    <option value="left-bottom" <?php echo (isset($current_wall['keyvisual_position']) && $current_wall['keyvisual_position'] === 'left-bottom') ? 'selected' : ''; ?>>Left Bottom</option>
                                 </select>
                                 <p class="description">Choose the position of the keyvisual text overlay.</p>
+                            </td>
+                        </tr>
+                        <tr class="wpalw-keyvisual-fields" style="<?php echo (isset($current_wall['keyvisual_mode']) && $current_wall['keyvisual_mode']) ? '' : 'display:none;'; ?>">
+                            <th scope="row">
+                                <label for="wpalw_keyvisual_fullwidth">Full Width</label>
+                            </th>
+                            <td>
+                                <input type="checkbox" id="wpalw_keyvisual_fullwidth" name="wpalw_keyvisual_fullwidth" value="1" <?php checked(isset($current_wall['keyvisual_fullwidth']) && $current_wall['keyvisual_fullwidth']); ?>>
+                                <span class="description">Enable full width</span>
                             </td>
                         </tr>
                     </table>
@@ -403,9 +417,14 @@ if (!$current_wall && !empty($walls)) {
                             <td><?php _e('Background color for the keyvisual text (supports rgba for transparency).', 'wp-animated-live-wall'); ?></td>
                         </tr>
                         <tr>
-                            <td><code>keyvisual_bgcolor</code></td>
-                            <td><?php echo isset($current_wall['keyvisual_bgcolor']) ? esc_html($current_wall['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)'; ?></td>
-                            <td><?php _e('Background color for the keyvisual text. Use rgba format for transparency.', 'wp-animated-live-wall'); ?></td>
+                            <td><code>keyvisual_position</code></td>
+                            <td><?php echo isset($current_wall['keyvisual_position']) ? esc_html($current_wall['keyvisual_position']) : 'center'; ?></td>
+                            <td><?php _e('Position of the keyvisual text overlay (center, left, left-bottom).', 'wp-animated-live-wall'); ?></td>
+                        </tr>
+                        <tr>
+                            <td><code>keyvisual_fullwidth</code></td>
+                            <td><?php echo isset($current_wall['keyvisual_fullwidth']) && $current_wall['keyvisual_fullwidth'] ? 'true' : 'false'; ?></td>
+                            <td><?php _e('Extend keyvisual to full browser width (true/false).', 'wp-animated-live-wall'); ?></td>
                         </tr>
                     </tbody>
                 </table>
@@ -426,7 +445,7 @@ if (!$current_wall && !empty($walls)) {
                 </div>
                 <h5><?php _e('With Keyvisual', 'wp-animated-live-wall'); ?></h5>
                 <div class="wpalw-shortcode-box">
-                    <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" keyvisual_mode="true" keyvisual_title="<?php echo isset($current_wall['keyvisual_title']) ? esc_attr($current_wall['keyvisual_title']) : 'Mein Keyvisual Titel'; ?>" keyvisual_subtitle="<?php echo isset($current_wall['keyvisual_subtitle']) ? esc_attr($current_wall['keyvisual_subtitle']) : 'Ein ansprechender Untertitel'; ?>" keyvisual_bgcolor="<?php echo isset($current_wall['keyvisual_bgcolor']) ? esc_attr($current_wall['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)'; ?>"]</code>
+                    <code>[animated_live_wall id="<?php echo esc_attr($current_wall_id); ?>" keyvisual_mode="true" keyvisual_title="<?php echo isset($current_wall['keyvisual_title']) ? esc_attr($current_wall['keyvisual_title']) : 'Mein Keyvisual Titel'; ?>" keyvisual_subtitle="<?php echo isset($current_wall['keyvisual_subtitle']) ? esc_attr($current_wall['keyvisual_subtitle']) : 'Ein ansprechender Untertitel'; ?>" keyvisual_bgcolor="<?php echo isset($current_wall['keyvisual_bgcolor']) ? esc_attr($current_wall['keyvisual_bgcolor']) : 'rgba(44, 62, 80, 0.8)'; ?>" keyvisual_fullwidth="<?php echo isset($current_wall['keyvisual_fullwidth']) && $current_wall['keyvisual_fullwidth'] ? 'true' : 'false'; ?>"]</code>
                     <button type="button" class="button wpalw-copy-shortcode">
                         <span class="dashicons dashicons-clipboard"></span> <?php _e('Copy', 'wp-animated-live-wall'); ?>
                     </button>
