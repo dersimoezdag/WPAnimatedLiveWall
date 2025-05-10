@@ -28,6 +28,15 @@ $all_image_urls_json = json_encode($all_image_urls);
 $has_enough_images = count($all_image_urls) >= ($rows * $columns);
 ?>
 
+<?php if (!empty($wall['keyvisual_mode'])) : ?>
+    <div class="wpalw-keyvisual" style="position: relative; width: 100%; padding: 0;">
+        <div class="wpalw-keyvisual-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center;">
+            <h1 style="margin: 0; font-size: 3rem;"> <?php echo isset($wall['keyvisual_title']) ? htmlspecialchars($wall['keyvisual_title'], ENT_QUOTES, 'UTF-8') : ''; ?> </h1>
+            <p style="margin: 0; font-size: 1.5rem;"> <?php echo isset($wall['keyvisual_subtitle']) ? htmlspecialchars($wall['keyvisual_subtitle'], ENT_QUOTES, 'UTF-8') : ''; ?> </p>
+        </div>
+    </div>
+<?php endif; ?>
+
 <div id="wpalw-<?php echo $wall_id; ?>" class="wp-animated-live-wall"
     data-rows="<?php echo $rows; ?>"
     data-columns="<?php echo $columns; ?>"
@@ -36,6 +45,7 @@ $has_enough_images = count($all_image_urls) >= ($rows * $columns);
     data-gap="<?php echo $gap; ?>"
     data-effects='<?php echo $effects_json; ?>'
     data-all-image-urls='<?php echo $all_image_urls_json; ?>'
+    data-tiles-at-once="<?php echo $tiles_at_once; ?>"
     style="grid-template-columns: repeat(<?php echo $columns; ?>, 1fr); grid-gap: <?php echo $gap; ?>px;"><?php
                                                                                                             // Bilder anzeigen
                                                                                                             $counter = 0;

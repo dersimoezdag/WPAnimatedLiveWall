@@ -343,10 +343,13 @@
     transition: 400, // Dauer der Überblendung
     availableEffects: ['crossfade'], // Standard-Effekt
     randomize: true // Zufälliger Effekt aus den verfügbaren
-  };
-  function init() {
+  };  function init() {
     $('.wp-animated-live-wall').each(function () {
       var $wall = $(this);
+      
+      // Debug: Zeige alle data-Attribute an
+      console.log('Wall data attributes:', $wall.data());
+      console.log('Tiles at once raw value:', $wall.attr('data-tiles-at-once'));
 
       // Zufällige ID generieren, falls keine vorhanden ist
       var wallId = $wall.data('id');
@@ -361,7 +364,9 @@
         columns: parseInt($wall.data('columns'), 10) || 4,
         animationSpeed: parseInt($wall.data('animation-speed'), 10) || options.animationSpeed,
         transition: parseInt($wall.data('transition'), 10) || options.transition,
-        animating: false // Flag zur Kontrolle, dass nur eine Kachel gleichzeitig animiert wird
+        tilesAtOnce: parseInt($wall.attr('data-tiles-at-once'), 10) || 1,
+        animating: false, // Flag zur Kontrolle der Animation
+        tilesAnimated: 0 // Zähler für animierte Kacheln
       }; // Ausgewählte Effekte aus dem data-effects Attribut lesen
       var selectedEffects = $wall.data('effects');
 
@@ -443,7 +448,6 @@
       animateNextTile(wall, wallOptions);
     }, 1000);
   }
-
   function animateNextTile(wall, wallOptions) {
     // Wenn bereits eine Animation läuft, nichts tun
     if (wallOptions.animating) {
@@ -453,15 +457,51 @@
     var tiles = wall.find('.wall-tile');
     if (tiles.length === 0) return;
 
-    // Wähle eine zufällige Kachel aus
-    var randomTileIndex = Math.floor(Math.random() * tiles.length);
-    var randomTile = tiles.eq(randomTileIndex);
+    // Bestimme wie viele Kacheln gleichzeitig wechseln sollen
+    var tilesAtOnce = parseInt(wallOptions.tilesAtOnce, 10) || 1;
+    // Stelle sicher, dass nicht mehr Kacheln animiert werden als vorhanden sind
+    tilesAtOnce = Math.min(tilesAtOnce, tiles.length);
+
+    // Reset des Zählers für animierte Kacheln
+    wallOptions.tilesAnimated = 0;
+    wallOptions.tilesInAnimation = tilesAtOnce;
 
     // Markiere die Wand als "animierend"
     wallOptions.animating = true;
 
-    // Führe die Animation für diese Kachel aus
-    animateSingleTile(randomTile, wall, wallOptions);
+    // Erstelle ein Array mit allen Kachel-Indizes
+    var allTileIndices = [];
+    for (var i = 0; i < tiles.length; i++) {
+      allTileIndices.push(i);
+    }
+
+    // Mische die Indizes, um zufällige Kacheln auszuwählen
+    shuffleArray(allTileIndices);
+
+    // Wähle die ersten X Kacheln aus dem gemischten Array
+    var selectedTileIndices = allTileIndices.slice(0, tilesAtOnce);
+    console.log('Ausgewählte Kacheln:', selectedTileIndices, tilesAtOnce);
+    console.log('Ausgewählte Kacheln:', selectedTileIndices, tilesAtOnce);    // Animiere die ausgewählten Kacheln
+    for (var j = 0; j < selectedTileIndices.length; j++) {
+      (function (tileIndex) {
+        setTimeout(function() {
+          var tile = tiles.eq(tileIndex);
+          animateSingleTile(tile, wall, wallOptions);
+        }, j * 150); // Kleine zeitliche Versetzung zwischen den Kacheln
+      })(selectedTileIndices[j]);
+    }
+    
+    console.log('Animiere ' + tilesAtOnce + ' Kacheln gleichzeitig');
+
+    // Hilfsfunktion zum Mischen eines Arrays (Fisher-Yates Shuffle)
+    function shuffleArray(array) {
+      for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+      }
+    }
   }
   function animateSingleTile(tile, wall, wallOptions) {
     // Sammle alle aktuell sichtbaren Bilder und ihre Quellen
@@ -550,20 +590,18 @@
 
     // Führe den Effekt aus
     effectHandlers[effect](tile, nextImage);
-
     // Nach Abschluss der Animation
     setTimeout(function () {
-      // Setze das Animationsflag zurück
-      wallOptions.animating = false;
-
-      // Berechne die Zeit bis zur nächsten Animation
-      // Mindestzeit zwischen Animationen: 2000ms oder animationSpeed, je nachdem was größer ist
-      var nextDelay = Math.max(2000, wallOptions.animationSpeed);
-
-      // Plane die nächste Animation
-      setTimeout(function () {
-        animateNextTile(wall, wallOptions);
-      }, nextDelay);
+      wallOptions.tilesAnimated++;
+      // Prüfe, ob alle Kacheln dieser Animationsrunde bearbeitet wurden
+      if (wallOptions.tilesAnimated >= wallOptions.tilesInAnimation) {
+        wallOptions.animating = false;
+        // Berechne die Zeit bis zur nächsten Animation
+        var nextDelay = Math.max(2000, wallOptions.animationSpeed);
+        setTimeout(function () {
+          animateNextTile(wall, wallOptions);
+        }, nextDelay);
+      }
     }, effectDuration + 100); // Extra Zeit für sicheres Beenden der Animation
   }
 
