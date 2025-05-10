@@ -146,7 +146,15 @@ class WP_Animated_Live_Wall
                 'transition' => isset($wall_to_sanitize['transition']) ? absint($wall_to_sanitize['transition']) : 400,
                 'gap' => isset($wall_to_sanitize['gap']) ? intval($wall_to_sanitize['gap']) : 4,
                 'columns' => isset($wall_to_sanitize['columns']) ? absint($wall_to_sanitize['columns']) : 4,
+                'columns_sm' => isset($wall_to_sanitize['columns_sm']) ? absint($wall_to_sanitize['columns_sm']) : 2,
+                'columns_md' => isset($wall_to_sanitize['columns_md']) ? absint($wall_to_sanitize['columns_md']) : 3,
+                'columns_lg' => isset($wall_to_sanitize['columns_lg']) ? absint($wall_to_sanitize['columns_lg']) : 4,
+                'columns_xl' => isset($wall_to_sanitize['columns_xl']) ? absint($wall_to_sanitize['columns_xl']) : 5,
                 'rows' => isset($wall_to_sanitize['rows']) ? absint($wall_to_sanitize['rows']) : 3,
+                'rows_sm' => isset($wall_to_sanitize['rows_sm']) ? absint($wall_to_sanitize['rows_sm']) : 2,
+                'rows_md' => isset($wall_to_sanitize['rows_md']) ? absint($wall_to_sanitize['rows_md']) : 3,
+                'rows_lg' => isset($wall_to_sanitize['rows_lg']) ? absint($wall_to_sanitize['rows_lg']) : 4,
+                'rows_xl' => isset($wall_to_sanitize['rows_xl']) ? absint($wall_to_sanitize['rows_xl']) : 5,
                 'selected_effects' => array(),
                 'tiles_at_once' => isset($wall_to_sanitize['tiles_at_once']) ? absint($wall_to_sanitize['tiles_at_once']) : 1,
                 'keyvisual_mode' => isset($wall_to_sanitize['keyvisual_mode']) ? (bool)$wall_to_sanitize['keyvisual_mode'] : false,
@@ -338,7 +346,15 @@ class WP_Animated_Live_Wall
         $atts = shortcode_atts(array(
             'id' => 'default',
             'columns' => '',
+            'columns_sm' => '',
+            'columns_md' => '',
+            'columns_lg' => '',
+            'columns_xl' => '',
             'rows' => '',
+            'rows_sm' => '',
+            'rows_md' => '',
+            'rows_lg' => '',
+            'rows_xl' => '',
             'animation_speed' => '', // Animation speed in milliseconds
             'transition' => '',      // Transition time in milliseconds
             'gap' => '',             // Gap between images in pixels
@@ -396,7 +412,15 @@ class WP_Animated_Live_Wall
 
         // Resolve settings
         $columns = !empty($atts['columns']) ? absint($atts['columns']) : (isset($current_wall_settings['columns']) ? absint($current_wall_settings['columns']) : $default_columns);
+        $columns_sm = !empty($atts['columns_sm']) ? absint($atts['columns_sm']) : (isset($current_wall_settings['columns_sm']) ? absint($current_wall_settings['columns_sm']) : $default_columns);
+        $columns_md = !empty($atts['columns_md']) ? absint($atts['columns_md']) : (isset($current_wall_settings['columns_md']) ? absint($current_wall_settings['columns_md']) : $default_columns);
+        $columns_lg = !empty($atts['columns_lg']) ? absint($atts['columns_lg']) : (isset($current_wall_settings['columns_lg']) ? absint($current_wall_settings['columns_lg']) : $default_columns);
+        $columns_xl = !empty($atts['columns_xl']) ? absint($atts['columns_xl']) : (isset($current_wall_settings['columns_xl']) ? absint($current_wall_settings['columns_xl']) : $default_columns);
         $rows = !empty($atts['rows']) ? absint($atts['rows']) : (isset($current_wall_settings['rows']) ? absint($current_wall_settings['rows']) : $default_rows);
+        $rows_sm = !empty($atts['rows_sm']) ? absint($atts['rows_sm']) : (isset($current_wall_settings['rows_sm']) ? absint($current_wall_settings['rows_sm']) : $default_rows);
+        $rows_md = !empty($atts['rows_md']) ? absint($atts['rows_md']) : (isset($current_wall_settings['rows_md']) ? absint($current_wall_settings['rows_md']) : $default_rows);
+        $rows_lg = !empty($atts['rows_lg']) ? absint($atts['rows_lg']) : (isset($current_wall_settings['rows_lg']) ? absint($current_wall_settings['rows_lg']) : $default_rows);
+        $rows_xl = !empty($atts['rows_xl']) ? absint($atts['rows_xl']) : (isset($current_wall_settings['rows_xl']) ? absint($current_wall_settings['rows_xl']) : $default_rows);
         $animation_speed = isset($current_wall_settings['animation_speed']) ? absint($current_wall_settings['animation_speed']) : $default_animation_speed;
         $transition = isset($current_wall_settings['transition']) ? absint($current_wall_settings['transition']) : $default_transition;
         $tiles_at_once = !empty($atts['tiles_at_once']) ? absint($atts['tiles_at_once']) : (isset($current_wall_settings['tiles_at_once']) ? absint($current_wall_settings['tiles_at_once']) : $default_tiles_at_once);
@@ -466,7 +490,15 @@ class WP_Animated_Live_Wall
         $wall_data_for_template = array(
             'wall_id' => $wall_id,
             'columns' => $columns,
+            'columns_sm' => $columns_sm,
+            'columns_md' => $columns_md,
+            'columns_lg' => $columns_lg,
+            'columns_xl' => $columns_xl,
             'rows' => $rows,
+            'rows_sm' => $rows_sm,
+            'rows_md' => $rows_md,
+            'rows_lg' => $rows_lg,
+            'rows_xl' => $rows_xl,
             'animation_speed' => $animation_speed,
             'transition' => $transition,
             'gap' => $gap,
@@ -529,7 +561,16 @@ class WP_Animated_Live_Wall
                 'transition' => 400,
                 'gap' => 4,
                 'columns' => 4,
+                'columns_sm' => 2,
+                'columns_md' => 3,
+                'columns_lg' => 4,
+                'columns_xl' => 5,
+                'tiles_at_once' => 1,
                 'rows' => 3,
+                'rows_sm' => 2,
+                'rows_md' => 3,
+                'rows_lg' => 4,
+                'rows_xl' => 5,
                 'selected_effects' => $available_effects_keys, // Default to all available for new wall
                 'keyvisual_mode' => false,
                 'keyvisual_title' => '',
@@ -589,8 +630,33 @@ class WP_Animated_Live_Wall
         if (isset($wall_data_from_post['columns'])) {
             $current_wall_data_for_processing['columns'] = absint($wall_data_from_post['columns']);
         }
+        if (isset($wall_data_from_post['columns_sm'])) {
+            $current_wall_data_for_processing['columns_sm'] = absint($wall_data_from_post['columns_sm']);
+        }
+        if (isset($wall_data_from_post['columns_md'])) {
+            $current_wall_data_for_processing['columns_md'] = absint($wall_data_from_post['columns_md']);
+        }
+        if (isset($wall_data_from_post['columns_lg'])) {
+            $current_wall_data_for_processing['columns_lg'] = absint($wall_data_from_post['columns_lg']);
+        }
+        if (isset($wall_data_from_post['columns_xl'])) {
+            $current_wall_data_for_processing['columns_xl'] = absint($wall_data_from_post['columns_xl']);
+        }
+
         if (isset($wall_data_from_post['rows'])) {
             $current_wall_data_for_processing['rows'] = absint($wall_data_from_post['rows']);
+        }
+        if (isset($wall_data_from_post['rows_sm'])) {
+            $current_wall_data_for_processing['rows_sm'] = absint($wall_data_from_post['rows_sm']);
+        }
+        if (isset($wall_data_from_post['rows_md'])) {
+            $current_wall_data_for_processing['rows_md'] = absint($wall_data_from_post['rows_md']);
+        }
+        if (isset($wall_data_from_post['rows_lg'])) {
+            $current_wall_data_for_processing['rows_lg'] = absint($wall_data_from_post['rows_lg']);
+        }
+        if (isset($wall_data_from_post['rows_xl'])) {
+            $current_wall_data_for_processing['rows_xl'] = absint($wall_data_from_post['rows_xl']);
         }
 
         if (isset($wall_data_from_post['tiles_at_once'])) {

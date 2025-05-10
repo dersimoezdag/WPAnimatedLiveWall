@@ -596,11 +596,6 @@
   function adjustGrid() {
     $('.wp-animated-live-wall').each(function () {
       var $wall = $(this);
-      var wallOptions = $wall.data('options') || {};
-
-      // Get the desired rows and columns
-      var rows = parseInt(wallOptions.rows, 10) || 3;
-      var columns = parseInt(wallOptions.columns, 10) || 4;
 
       // Configure responsive behavior based on screen width
       const breakpoints = {
@@ -616,40 +611,71 @@
       let actualColumns = columns;
 
       if (screenWidth < breakpoints.small) {
-        // On very small screens, ensure at least one column but no more than 2
-        actualColumns = Math.min(2, columns);
+        // On very small screens, use small-specific columns or default to 1
+        let smallScreenColumns = $wall.data('columns-sm') || 1;
+        actualColumns = Math.max(1, smallScreenColumns);
 
-        // Make sure the last row is fully filled
-        while ((rows * actualColumns) % actualColumns !== 0) {
-          actualColumns--;
-          if (actualColumns < 1) actualColumns = 1;
+        // Handle rows for small screens - hide rows if specified
+        let smallScreenRows = $wall.data('rows-sm');
+
+        // If rows-sm is set, hide tiles beyond the visible rows*columns limit
+        if (smallScreenRows !== undefined) {
+          let visibleCells = smallScreenRows * actualColumns;
+          $wall.find('.wall-tile').each(function (index) {
+            if (index < visibleCells) {
+              $(this).show();
+            } else {
+              $(this).hide();
+            }
+          });
         }
       } else if (screenWidth < breakpoints.medium) {
-        // On small screens, reduce columns but ensure at least 2
-        actualColumns = Math.max(2, Math.min(3, columns));
+        // On very small screens, use small-specific columns or default to 1
+        let smallScreenColumns = $wall.data('columns-md') || 1;
+        actualColumns = Math.max(1, smallScreenColumns);
 
-        // Make sure the last row is fully filled
-        while ((rows * columns) % actualColumns !== 0) {
-          actualColumns--;
-          if (actualColumns < 2) break;
+        // Handle rows for small screens - hide rows if specified
+        let smallScreenRows = $wall.data('rows-md');
+
+        // If rows-md is set, hide tiles beyond the visible rows*columns limit
+        if (smallScreenRows !== undefined) {
+          let visibleCells = smallScreenRows * actualColumns;
+          $wall.find('.wall-tile').each(function (index) {
+            if (index < visibleCells) {
+              $(this).show();
+            } else {
+              $(this).hide();
+            }
+          });
         }
       } else if (screenWidth < breakpoints.large) {
-        // On medium screens, use slightly reduced columns if original is high
-        actualColumns = columns > 4 ? columns - 1 : columns;
+        // On very small screens, use small-specific columns or default to 1
+        let smallScreenColumns = $wall.data('columns-lg') || 1;
+        actualColumns = Math.max(1, smallScreenColumns);
 
-        // Make sure the last row is fully filled
-        while ((rows * columns) % actualColumns !== 0) {
-          actualColumns--;
-          if (actualColumns < 2) break;
+        // Handle rows for small screens - hide rows if specified
+        let smallScreenRows = $wall.data('rows-lg');
+
+        // If rows-lg is set, hide tiles beyond the visible rows*columns limit
+        if (smallScreenRows !== undefined) {
+          let visibleCells = smallScreenRows * actualColumns;
+          $wall.find('.wall-tile').each(function (index) {
+            if (index < visibleCells) {
+              $(this).show();
+            } else {
+              $(this).hide();
+            }
+          });
         }
+      } else {
+        // On larger screens, use the original columns and rows
+        actualColumns = columns;
+        smallScreenRows = rows;
       }
-
-      // Update columns for responsive layout
-      columns = actualColumns;
 
       // Apply grid layout
       $wall.css({
-        'grid-template-columns': 'repeat(' + columns + ', 1fr)'
+        'grid-template-columns': 'repeat(' + actualColumns + ', 1fr)'
       });
     });
   }

@@ -206,7 +206,170 @@ if (!$current_wall && !empty($walls)) {
                         </tr>
                         <tr>
                             <th scope="row">
-                                <label for="wpalw_columns"><?php _e('Grid Columns', 'wp-animated-live-wall'); ?></label>
+                                <label><?php _e('Responsive Grid', 'wp-animated-live-wall'); ?></label>
+                            </th>
+                            <td>
+                                <div class="wpalw-responsive-grid-settings">
+                                    <div class="wpalw-grid-setting">
+                                        <label for="wpalw_columns_xl">
+                                            <span class="dashicons dashicons-desktop"></span> <?php _e('XL', 'wp-animated-live-wall'); ?>
+                                        </label>
+                                        <div class="wpalw-grid-inputs">
+                                            <select id="wpalw_columns_xl" name="wpalw_columns_xl" class="wpalw-columns-input">
+                                                <?php
+                                                $columns_xl = isset($current_wall['columns_xl']) ? $current_wall['columns_xl'] : $columns;
+                                                for ($i = 1; $i <= 12; $i++) : ?>
+                                                    <option value="<?php echo $i; ?>" <?php selected($columns_xl, $i); ?>>
+                                                        <?php echo $i; ?> <?php _e('columns', 'wp-animated-live-wall'); ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                            <select id="wpalw_rows_xl" name="wpalw_rows_xl" class="wpalw-rows-input">
+                                                <?php
+                                                $rows_xl = isset($current_wall['rows_xl']) ? $current_wall['rows_xl'] : $rows;
+                                                for ($i = 1; $i <= 12; $i++) : ?>
+                                                    <option value="<?php echo $i; ?>" <?php selected($rows_xl, $i); ?>>
+                                                        <?php echo $i; ?> <?php _e('rows', 'wp-animated-live-wall'); ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                        </div>
+                                        <p class="description"><?php _e('Large desktop (≥1200px)', 'wp-animated-live-wall'); ?></p>
+                                    </div>
+
+                                    <div class="wpalw-grid-setting">
+                                        <label for="wpalw_columns_lg">
+                                            <span class="dashicons dashicons-desktop"></span> <?php _e('LG', 'wp-animated-live-wall'); ?>
+                                        </label>
+                                        <div class="wpalw-grid-inputs">
+                                            <select id="wpalw_columns_lg" name="wpalw_columns_lg" class="wpalw-columns-input">
+                                                <?php
+                                                $columns_lg = isset($current_wall['columns_lg']) ? $current_wall['columns_lg'] : $columns;
+                                                for ($i = 1; $i <= 12; $i++) : ?>
+                                                    <option value="<?php echo $i; ?>" <?php selected($columns_lg, $i); ?>>
+                                                        <?php echo $i; ?> <?php _e('columns', 'wp-animated-live-wall'); ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                            <select id="wpalw_rows_lg" name="wpalw_rows_lg" class="wpalw-rows-input">
+                                                <?php
+                                                $rows_lg = isset($current_wall['rows_lg']) ? $current_wall['rows_lg'] : $rows;
+                                                for ($i = 1; $i <= 12; $i++) : ?>
+                                                    <option value="<?php echo $i; ?>" <?php selected($rows_lg, $i); ?>>
+                                                        <?php echo $i; ?> <?php _e('rows', 'wp-animated-live-wall'); ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                        </div>
+                                        <p class="description"><?php _e('Desktop (992px-1199px)', 'wp-animated-live-wall'); ?></p>
+                                    </div>
+
+                                    <div class="wpalw-grid-setting">
+                                        <label for="wpalw_columns_md">
+                                            <span class="dashicons dashicons-tablet"></span> <?php _e('MD', 'wp-animated-live-wall'); ?>
+                                        </label>
+                                        <div class="wpalw-grid-inputs">
+                                            <select id="wpalw_columns_md" name="wpalw_columns_md" class="wpalw-columns-input">
+                                                <?php
+                                                $columns_md = isset($current_wall['columns_md']) ? $current_wall['columns_md'] : min($columns, 3);
+                                                for ($i = 1; $i <= 12; $i++) : ?>
+                                                    <option value="<?php echo $i; ?>" <?php selected($columns_md, $i); ?>>
+                                                        <?php echo $i; ?> <?php _e('columns', 'wp-animated-live-wall'); ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                            <select id="wpalw_rows_md" name="wpalw_rows_md" class="wpalw-rows-input">
+                                                <?php
+                                                $rows_md = isset($current_wall['rows_md']) ? $current_wall['rows_md'] : $rows;
+                                                for ($i = 1; $i <= 12; $i++) : ?>
+                                                    <option value="<?php echo $i; ?>" <?php selected($rows_md, $i); ?>>
+                                                        <?php echo $i; ?> <?php _e('rows', 'wp-animated-live-wall'); ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                        </div>
+                                        <p class="description"><?php _e('Tablet (768px-991px)', 'wp-animated-live-wall'); ?></p>
+                                    </div>
+
+                                    <div class="wpalw-grid-setting">
+                                        <label for="wpalw_columns_sm">
+                                            <span class="dashicons dashicons-smartphone"></span> <?php _e('SM', 'wp-animated-live-wall'); ?>
+                                        </label>
+                                        <div class="wpalw-grid-inputs">
+                                            <select id="wpalw_columns_sm" name="wpalw_columns_sm" class="wpalw-columns-input">
+                                                <?php
+                                                $columns_sm = isset($current_wall['columns_sm']) ? $current_wall['columns_sm'] : min($columns, 2);
+                                                for ($i = 1; $i <= 12; $i++) : ?>
+                                                    <option value="<?php echo $i; ?>" <?php selected($columns_sm, $i); ?>>
+                                                        <?php echo $i; ?> <?php _e('columns', 'wp-animated-live-wall'); ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                            <select id="wpalw_rows_sm" name="wpalw_rows_sm" class="wpalw-rows-input">
+                                                <?php
+                                                $rows_sm = isset($current_wall['rows_sm']) ? $current_wall['rows_sm'] : max(1, floor($rows / 2));
+                                                for ($i = 1; $i <= 12; $i++) : ?>
+                                                    <option value="<?php echo $i; ?>" <?php selected($rows_sm, $i); ?>>
+                                                        <?php echo $i; ?> <?php _e('rows', 'wp-animated-live-wall'); ?>
+                                                    </option>
+                                                <?php endfor; ?>
+                                            </select>
+                                        </div>
+                                        <p class="description"><?php _e('Mobile (<768px)', 'wp-animated-live-wall'); ?></p>
+                                    </div>
+                                </div>
+                                <p class="description"><?php _e('Configure grid layout for different screen sizes.', 'wp-animated-live-wall'); ?></p>
+                                <style>
+                                    .wpalw-responsive-grid-settings {
+                                        display: flex;
+                                        flex-wrap: wrap;
+                                        gap: 20px;
+                                        margin-bottom: 10px;
+                                    }
+
+                                    .wpalw-grid-setting {
+                                        min-width: 200px;
+                                        padding: 10px;
+                                        background: #f9f9f9;
+                                        border: 1px solid #e0e0e0;
+                                        border-radius: 5px;
+                                    }
+
+                                    .wpalw-grid-setting label {
+                                        display: block;
+                                        font-weight: 600;
+                                        margin-bottom: 5px;
+                                    }
+
+                                    .wpalw-grid-inputs {
+                                        display: flex;
+                                        gap: 10px;
+                                        margin-bottom: 5px;
+                                    }
+
+                                    .wpalw-columns-input,
+                                    .wpalw-rows-input {
+                                        flex: 1;
+                                        min-width: 80px;
+                                    }
+
+                                    .wpalw-grid-setting .description {
+                                        margin-top: 5px;
+                                        font-style: italic;
+                                        font-size: 12px;
+                                    }
+
+                                    .dashicons-desktop,
+                                    .dashicons-tablet,
+                                    .dashicons-smartphone {
+                                        vertical-align: middle;
+                                    }
+                                </style>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th scope="row">
+                                <label for="wpalw_columns"><?php _e('Default Columns', 'wp-animated-live-wall'); ?></label>
                             </th>
                             <td>
                                 <select id="wpalw_columns" name="wpalw_columns">
@@ -216,12 +379,12 @@ if (!$current_wall && !empty($walls)) {
                                         </option>
                                     <?php endfor; ?>
                                 </select>
-                                <p class="description"><?php _e('Number of columns in the image grid.', 'wp-animated-live-wall'); ?></p>
+                                <p class="description"><?php _e('Default number of columns (used when responsive values not specified).', 'wp-animated-live-wall'); ?></p>
                             </td>
                         </tr>
                         <tr>
                             <th scope="row">
-                                <label for="wpalw_rows"><?php _e('Grid Rows', 'wp-animated-live-wall'); ?></label>
+                                <label for="wpalw_rows"><?php _e('Default Rows', 'wp-animated-live-wall'); ?></label>
                             </th>
                             <td>
                                 <select id="wpalw_rows" name="wpalw_rows">
@@ -234,7 +397,7 @@ if (!$current_wall && !empty($walls)) {
                                         </option>
                                     <?php endfor; ?>
                                 </select>
-                                <p class="description"><?php _e('Number of rows in the image grid.', 'wp-animated-live-wall'); ?></p>
+                                <p class="description"><?php _e('Default number of rows (used when responsive values not specified).', 'wp-animated-live-wall'); ?></p>
                             </td>
                         </tr>
                         <tr>
