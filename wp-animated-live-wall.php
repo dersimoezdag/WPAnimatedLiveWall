@@ -3,12 +3,12 @@
 /**
  * Plugin Name: WP Animated Live Wall
  * Plugin URI: https://github.com/dersimoezdag/WPAnimatedLiveWall
- * Description: A WordPress plugin that displays an animated live wall with photo tiles that randomly switch after page load.
- * Version: 1.2.14
+ * Description: A WordPress plugin that displays an animated live wall with photo tiles that randomly switch.
+ * Version: 1.2.15
  * Author: Dersim Özdag
  * Author URI: https://github.com/dersimoezdag
  * Text Domain: wp-animated-live-wall
- * License: GPL-2.0+
+ * License: GPL-3.0
  */
 
 // If this file is called directly, abort.
@@ -17,7 +17,7 @@ if (!defined('WPINC')) {
 }
 
 // Define plugin constants
-define('WPALW_VERSION', '1.2.14');
+define('WPALW_VERSION', '1.2.15');
 define('WPALW_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('WPALW_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('WPALW_PLUGIN_BASENAME', plugin_basename(__FILE__));

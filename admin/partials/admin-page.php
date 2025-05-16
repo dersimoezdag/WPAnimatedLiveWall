@@ -18,7 +18,7 @@ $default_gap = isset($global_settings['default_gap']) ? $global_settings['defaul
 $current_wall_id = isset($_GET['wall']) ? sanitize_text_field($_GET['wall']) : 'default';
 
 // Get active tab from URL
-$active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'global';
+$active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'walls';
 
 // Find current wall
 $current_wall = null;
@@ -38,10 +38,10 @@ if (!$current_wall && !empty($walls)) {
 
 <div class="wrap">
     <h1><?php echo esc_html__('Animated Live Wall', 'wp-animated-live-wall'); ?></h1>
-
     <div id="wpalw-admin-tabs" class="nav-tab-wrapper">
         <a href="#tab-walls" class="nav-tab <?php echo $active_tab === 'walls' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__('Manage Walls', 'wp-animated-live-wall'); ?></a>
         <a href="#tab-global" class="nav-tab <?php echo $active_tab === 'global' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></a>
+        <a href="#tab-about" class="nav-tab <?php echo $active_tab === 'about' ? 'nav-tab-active' : ''; ?>"><?php echo esc_html__('About', 'wp-animated-live-wall'); ?></a>
     </div>
 
     <!-- Manage Walls Tab -->
@@ -81,10 +81,18 @@ if (!$current_wall && !empty($walls)) {
             <a href="#shortcode-tab" class="nav-tab"><?php _e('Shortcode', 'wp-animated-live-wall'); ?></a>
         </div>
 
+
         <div class="tab-content">
             <div id="images-tab" class="tab-pane active">
                 <h2><?php _e('Manage Live Wall Images', 'wp-animated-live-wall'); ?></h2>
                 <p><?php _e('Add, remove, and reorder the images for your animated live wall.', 'wp-animated-live-wall'); ?></p>
+
+                <div class="notice notice-info inline">
+                    <p>
+                        <strong><?php _e('Copyright Hint:', 'wp-animated-live-wall'); ?></strong>
+                        <?php _e('Ensure you have proper rights to use all uploaded images. Since direct attribution on the wall isn\'t possible, consider adding required credits on your site\'s imprint or credits page.', 'wp-animated-live-wall'); ?>
+                    </p>
+                </div>
 
                 <?php
                 // Prüfe, ob genügend Bilder vorhanden sind
@@ -664,57 +672,55 @@ if (!$current_wall && !empty($walls)) {
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Global Settings Tab -->
+    </div> <!-- Global Settings Tab -->
     <div id="tab-global" class="wpalw-tab-content" style="<?php echo $active_tab === 'global' ? '' : 'display:none;'; ?>">
         <form method="post" action="options.php" class="wpalw-settings-form">
             <?php settings_fields('wpalw_global_settings'); ?>
-            <h2><?php echo esc_html__('Global Settings', 'wp-animated-live-wall'); ?></h2>
-            <p class="description"><?php echo esc_html__('Set default values for all animated live walls.', 'wp-animated-live-wall'); ?></p>
+            <h2><?php echo __('Global Settings', 'wp-animated-live-wall'); ?></h2>
+            <p class="description"><?php echo __('Set default values for all animated live walls.', 'wp-animated-live-wall'); ?></p>
 
             <!-- Hidden field to ensure we're only updating global settings, not wall data -->
             <input type="hidden" name="wpalw_action" value="update_global_settings">
 
             <table class="form-table">
                 <tr valign="top">
-                    <th scope="row"><?php echo esc_html__('Default Rows', 'wp-animated-live-wall'); ?></th>
+                    <th scope="row"><?php echo __('Default Rows', 'wp-animated-live-wall'); ?></th>
                     <td>
                         <input type="number" name="wpalw_global_options[default_rows]" value="<?php echo esc_attr($default_rows); ?>" min="1" max="12" step="1" />
                         <p class="description">
-                            <?php echo esc_html__('Default number of rows for new walls and shortcodes.', 'wp-animated-live-wall'); ?>
+                            <?php echo __('Default number of rows for new walls and shortcodes.', 'wp-animated-live-wall'); ?>
                         </p>
                     </td>
                 </tr>
                 <tr valign="top">
-                    <th scope="row"><?php echo esc_html__('Default Columns', 'wp-animated-live-wall'); ?></th>
+                    <th scope="row"><?php echo __('Default Columns', 'wp-animated-live-wall'); ?></th>
                     <td>
                         <input type="number" name="wpalw_global_options[default_columns]" value="<?php echo esc_attr($default_columns); ?>" min="1" max="12" step="1" />
                         <p class="description">
-                            <?php echo esc_html__('Default number of columns for new walls and shortcodes.', 'wp-animated-live-wall'); ?>
+                            <?php echo __('Default number of columns for new walls and shortcodes.', 'wp-animated-live-wall'); ?>
                         </p>
                     </td>
                 </tr>
                 <tr valign="top">
-                    <th scope="row"><?php echo esc_html__('Default Animation Speed', 'wp-animated-live-wall'); ?></th>
+                    <th scope="row"><?php echo __('Default Animation Speed', 'wp-animated-live-wall'); ?></th>
                     <td>
                         <input type="number" name="wpalw_global_options[default_animation_speed]" value="<?php echo esc_attr($default_animation_speed); ?>" min="1000" step="100" />
                         <p class="description">
-                            <?php echo esc_html__('Default animation speed in milliseconds (min. 1000ms).', 'wp-animated-live-wall'); ?>
+                            <?php echo __('Default animation speed in milliseconds (min. 1000ms).', 'wp-animated-live-wall'); ?>
                         </p>
                     </td>
                 </tr>
                 <tr valign="top">
-                    <th scope="row"><?php echo esc_html__('Default Grid Gap', 'wp-animated-live-wall'); ?></th>
+                    <th scope="row"><?php echo __('Default Grid Gap', 'wp-animated-live-wall'); ?></th>
                     <td>
                         <input type="number" name="wpalw_global_options[default_gap]" value="<?php echo esc_attr($default_gap); ?>" min="0" max="20" step="1" />
                         <p class="description">
-                            <?php echo esc_html__('Default gap between images in pixels (0-20px).', 'wp-animated-live-wall'); ?>
+                            <?php echo __('Default gap between images in pixels (0-20px).', 'wp-animated-live-wall'); ?>
                         </p>
                     </td>
                 </tr>
                 <tr valign="top">
-                    <th scope="row"><?php echo esc_html__('Default Tiles at Once', 'wp-animated-live-wall'); ?></th>
+                    <th scope="row"><?php echo __('Default Tiles at Once', 'wp-animated-live-wall'); ?></th>
                     <td>
                         <select name="wpalw_global_options[default_tiles_at_once]">
                             <?php
@@ -727,7 +733,7 @@ if (!$current_wall && !empty($walls)) {
                             <?php endfor; ?>
                         </select>
                         <p class="description">
-                            <?php echo esc_html__('Default number of tiles that change simultaneously with each animation cycle.', 'wp-animated-live-wall'); ?>
+                            <?php echo __('Default number of tiles that change simultaneously with each animation cycle.', 'wp-animated-live-wall'); ?>
                         </p>
                     </td>
                 </tr>
@@ -736,6 +742,78 @@ if (!$current_wall && !empty($walls)) {
             <?php submit_button(__('Save Global Settings', 'wp-animated-live-wall')); ?>
         </form>
     </div>
+
+
+    <!-- About Tab -->
+    <div id="tab-about" class="wpalw-tab-content" style="<?php echo $active_tab === 'about' ? '' : 'display:none;'; ?>">
+        <h2>About Animated Live Wall</h2>
+        <?php include_once WPALW_PLUGIN_DIR . 'admin/partials/admin-about.php'; ?>
+    </div>
+
+    <style>
+        .wpalw-about-section {
+            max-width: 800px;
+            margin: 20px 0;
+            background: #fff;
+            padding: 25px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .wpalw-about-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .wpalw-about-logo {
+            margin-right: 20px;
+        }
+
+        .wpalw-about-logo img {
+            width: 80px;
+            height: auto;
+        }
+
+        .wpalw-about-version h3 {
+            margin: 0 0 5px 0;
+            font-size: 24px;
+        }
+
+        .wpalw-about-version p {
+            margin: 0;
+            color: #888;
+        }
+
+        .wpalw-about-description {
+            margin-bottom: 25px;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .wpalw-feature-list {
+            margin: 0 0 25px 20px;
+            list-style-type: square;
+        }
+
+        .wpalw-feature-list li {
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .wpalw-about-footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</div> <!-- End of tab-content -->
+
 
 </div>
 
